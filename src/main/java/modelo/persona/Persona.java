@@ -1,7 +1,11 @@
 
 package modelo.persona;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public abstract class Persona {
+    public String table;
     
     private String nombre;
     private String apellido;
@@ -19,6 +23,16 @@ public abstract class Persona {
         this.dni = dni;
         this.telefono = telefono;
         this.email = email;
+    }
+
+    public Map<String, String> toMap() {
+        Map<String, String> map = new HashMap<>();
+        map.put("nombre", nombre);
+        map.put("apellido", apellido);
+        map.put("dni", String.valueOf(dni));
+        map.put("telefono", telefono);
+        map.put("email", email);
+        return map;
     }
 
     public String getNombre() {

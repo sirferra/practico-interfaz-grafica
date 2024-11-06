@@ -1,22 +1,32 @@
 package modelo.persona;
 
+import java.util.Map;
+
 import repositorio.RepositorioDeDatos;
 
 
 
 public class Cliente extends Persona{
-    
     private String codigo;
     private String cuil;
     
     
     public Cliente(){
         super();
+        this.table = "clientes";
+    }
+
+    @Override
+    public Map<String, String> toMap() {
+        Map<String, String> map = super.toMap();
+        map.put("cuil", cuil); 
+        return map;
     }
             
     public Cliente(String cuil) {
         this.codigo = generarCodigo();
         this.cuil = cuil;
+        this.table = "clientes";
     }
 
     public Cliente(String cuil, String nombre, String apellido, int dni, String telefono, String email) {

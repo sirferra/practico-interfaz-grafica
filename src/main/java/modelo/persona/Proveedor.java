@@ -2,19 +2,33 @@
 package modelo.persona;
 
 import java.util.Calendar;
+import java.util.Map;
 
 import repositorio.RepositorioDeDatos;
 
 public class Proveedor extends Persona {
-    
     private String codigo;
     private String nombreFantasia;
     private String cuit;
+
+    public Proveedor() {
+        this.table = "proveedores";
+    }
 
     public Proveedor(String codigo, String nombreFantasia, String cuit) {
         this.codigo = codigo;
         this.nombreFantasia = nombreFantasia;
         this.cuit = cuit;
+        this.table = "proveedores";
+    }
+
+    @Override
+    public Map<String, String> toMap() {
+        Map<String, String> map = super.toMap();
+        map.put("cuit", cuit); 
+        map.put("nombreFantasia", nombreFantasia);
+        map.put("codigo", codigo);
+        return map;
     }
 
     public Proveedor(String codigo, String nombreFantasia, String cuit, String nombre, String apellido, int dni) {

@@ -1,20 +1,30 @@
 
 package modelo.persona;
 
+import java.util.Map;
+
 import repositorio.RepositorioDeDatos;
 
-public class Vendedor extends Persona {
-    
+public class Vendedor extends Persona {    
     private String codigo;
     private String sucursal;
     
     
     public Vendedor(){
         super();
+        this.table = "vendedores";
     }
     public Vendedor(String sucursal) {
         this.codigo = generarCodigo();
         this.sucursal = sucursal;
+        this.table= "vendedores";
+    }
+        @Override
+    public Map<String, String> toMap() {
+        Map<String, String> map = super.toMap();
+        map.put("codigo", codigo);
+        map.put("sucursal", sucursal);
+        return map;
     }
 
     public Vendedor(String sucursal, String nombre, String apellido, int dni, String telefono, String email) {

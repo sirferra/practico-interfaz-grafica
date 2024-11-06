@@ -1,6 +1,6 @@
 package negocio.Storage;
 
-import negocio.repositorio.StorageMemory;
+import negocio.mysql.Database;
 
 public class Storage {
     public Storage() {}
@@ -9,11 +9,11 @@ public class Storage {
         if(storageType == StorageType.FILE){
             return null;
         }else if(storageType == StorageType.MEMORY){
-            StorageMemory storageMemory = new StorageMemory();
-            storageMemory.seed();
-            return storageMemory;
-        }else if(storageType == StorageType.DATABASE){
+            // StorageMemory storageMemory = new StorageMemory();
+            // return storageMemory;
             return null;
+        }else if(storageType == StorageType.DATABASE){
+            return Database.getInstance();
         }
         return null;
     }

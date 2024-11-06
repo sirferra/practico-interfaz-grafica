@@ -1,6 +1,8 @@
 package ui;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 import exceptions.PersonExistsException;
@@ -9,10 +11,10 @@ import modelo.persona.Persona;
 import modelo.persona.Proveedor;
 import modelo.persona.Vendedor;
 import negocio.Storage.IStorage;
-import negocio.repositorio.StorageMemory;
-import negocio.repositorio.persona.PersonaType;
+import modelo.persona.PersonaType;
 import principal.VentaBici;
 import repositorio.RepositorioDeDatos;
+import util.Tools;
 
 public class CLI implements IUi{
     private int selectedItem = 0;
@@ -75,11 +77,14 @@ public class CLI implements IUi{
             switch (this.selectedItem){ 
                 case 1:
                     if(entity == PersonaType.CLIENTE){
-                        storage.create(this.getDataOfNewPersona(PersonaType.CLIENTE));
+                        Cliente c = (Cliente)this.getDataOfNewPersona(PersonaType.CLIENTE);
+                        storage.create(c.table, Tools.mapFromObject(c));
                     }else if(entity == PersonaType.PROVEEDOR){
-                        storage.create(this.getDataOfNewPersona(PersonaType.PROVEEDOR));
+                        Proveedor p = (Proveedor)this.getDataOfNewPersona(PersonaType.PROVEEDOR);
+                        storage.create(p.table, Tools.mapFromObject(p));
                     }else if(entity == PersonaType.VENDEDOR){
-                        storage.create(this.getDataOfNewPersona(PersonaType.VENDEDOR));
+                        Vendedor v = (Vendedor)this.getDataOfNewPersona(PersonaType.VENDEDOR);
+                        storage.create(v.table, Tools.mapFromObject(v));
                     }
                     System.out.println();
                     this.renderSubMenu(entity, storage);
@@ -98,18 +103,21 @@ public class CLI implements IUi{
                     break;
                 case 3:
                     if(entity == PersonaType.CLIENTE){
-                        storage.update(this.getDataToUpdatePersona(PersonaType.CLIENTE, storage));
+                        Map<String, String> c = this.getDataToUpdatePersona(PersonaType.CLIENTE, storage);
+                        storage.update("clientes", c, Integer.parseInt(c.get("dni")));
                     }else if(entity == PersonaType.PROVEEDOR){
-                        storage.update(this.getDataToUpdatePersona(PersonaType.PROVEEDOR, storage));
+                        Map<String, String> p = this.getDataToUpdatePersona(PersonaType.PROVEEDOR, storage);
+                        storage.update("proveedores", p, Integer.parseInt(p.get("dni")));
                     }else if(entity == PersonaType.VENDEDOR){
-                        storage.update(this.getDataToUpdatePersona(PersonaType.VENDEDOR, storage));
+                        Map<String, String> v = this.getDataToUpdatePersona(PersonaType.VENDEDOR, storage);
+                        storage.update("vendedores", v, Integer.parseInt(v.get("dni")));
                     }
                     System.out.println();
                     this.renderSubMenu(entity, storage);
                     break;
                 case 4:
                     Persona p = this.getPersonaToDelete(entity,storage);
-                    storage.delete(p);
+                    storage.delete(p.table, p);
                     System.out.println("Se ha eliminado " + p.getClass().getSimpleName() + ":" + p.toString());
                     System.out.println();
                     this.renderSubMenu(entity, storage);
@@ -133,6 +141,8 @@ public class CLI implements IUi{
     public String checkEmpty(String str,String org){
         return str.isEmpty() ? org : str;
     }
+
+
 
     public Persona getDataOfNewPersona(PersonaType typeOfPerson){
         System.out.println("Ingresa el dni");
@@ -167,18 +177,16 @@ public class CLI implements IUi{
         }       
     }
 
-    /**
-     * Pide al usuario los datos para actualizar una persona
-     * @param typeOfPerson tipo de persona a actualizar
-     * @param ABM objeto que implementa la interfaz IABMPersona
-     * @return la persona actualizada
-          * @throws Exception 
-          */
-         public Persona getDataToUpdatePersona(PersonaType typeOfPerson, IStorage storage) throws Exception {
+    public Map<String, String> getDataToUpdatePersona(PersonaType typeOfPerson, IStorage storage) throws Exception {
         System.out.println("Ingresa el dni");
         int dni = scanner.nextInt();
-        if (!storage.exists(dni)) throw new PersonExistsException("La persona no existe");
-        Persona p = (Persona) storage.get(dni, Persona.class);
+        System.out.println(typeOfPerson);
+        String table = typeOfPerson.createPersona().table;
+        System.out.println(table);;
+        if (!storage.exists(table, dni)) throw new PersonExistsException("La persona no existe");
+        int id = storage.getId(table, "dni", String.valueOf(dni));
+        System.out.println(id);
+        Persona p = (Persona) storage.get(table, id, typeOfPerson.createPersona().getClass());
         System.out.println("Ingresa el nombre [" + p.getNombre() + "]");
         String nombre = scanner.next();
         System.out.println("Ingresa el apellido [" + p.getApellido() + "]");
@@ -187,31 +195,28 @@ public class CLI implements IUi{
         String email = scanner.next();
         System.out.println("Ingresa el telefono [" + p.getTelefono() + "]");
         String telefono = scanner.next();
+
+        Map<String, String> updatedData = new HashMap<>();
+
+        updatedData.put("nombre", checkEmpty(nombre, p.getNombre()));
+        updatedData.put("apellido", checkEmpty(apellido, p.getApellido()));
+        updatedData.put("dni", String.valueOf(dni));
+        updatedData.put("telefono", checkEmpty(telefono, p.getTelefono()));
+        updatedData.put("email", checkEmpty(email, p.getEmail()));
+
         switch (typeOfPerson) {
             case CLIENTE:
                 Cliente client = (Cliente) p;
                 System.out.println("Ingresa el CUIL [" + client.getCuil() + "]");
                 String cuil = scanner.next();
-                return new Cliente(
-                    checkEmpty(cuil, client.getCuil()),
-                    checkEmpty(nombre, client.getNombre()),
-                    checkEmpty(apellido,p.getApellido()),
-                    dni,
-                    checkEmpty(telefono,p.getTelefono()),
-                    checkEmpty(email,p.getEmail())
-                );
+                updatedData.put("cuil", checkEmpty(cuil, client.getCuil()));
+                break;
             case VENDEDOR:
                 Vendedor vendedor = (Vendedor) p;
                 System.out.println("Ingresa la Sucursal [" + vendedor.getSucursal() + "]");
                 String sucursal = scanner.next();
-                return new Vendedor(
-                    checkEmpty(sucursal, vendedor.getSucursal()), 
-                    checkEmpty(nombre, vendedor.getNombre()),
-                    checkEmpty(apellido, vendedor.getApellido()),
-                    dni, 
-                    checkEmpty(telefono, vendedor.getTelefono()),
-                    checkEmpty(email, vendedor.getEmail())
-                );
+                updatedData.put("sucursal", checkEmpty(sucursal, vendedor.getSucursal()));
+                break;
             case PROVEEDOR:
                 Proveedor proveedor = (Proveedor) p;
                 System.out.println("Ingresa el codigo del proveedor [" + proveedor.getCodigo() + "]");
@@ -220,24 +225,23 @@ public class CLI implements IUi{
                 String nombreFantasia = scanner.next();
                 System.out.println("Ingresa el CUIT [" + proveedor.getCuit() + "]");
                 String cuit = scanner.next();
-                return new Proveedor(
-                    checkEmpty(cod, proveedor.getCodigo()),
-                    checkEmpty(nombreFantasia, proveedor.getNombreFantasia()),
-                    checkEmpty(cuit, proveedor.getCuit()),
-                    checkEmpty(nombre, proveedor.getNombre()),
-                    checkEmpty(apellido, proveedor.getApellido()),
-                    dni
-                );
+                updatedData.put("codigo", checkEmpty(cod, proveedor.getCodigo()));
+                updatedData.put("nombreFantasia", checkEmpty(nombreFantasia, proveedor.getNombreFantasia()));
+                updatedData.put("cuit", checkEmpty(cuit, proveedor.getCuit()));
+                break;
             default:
                 throw new IllegalArgumentException("Tipo de persona no válido");
         }
 
+        return updatedData;
     }
     
     public Persona getPersonaToDelete(PersonaType typeOfPerson, IStorage storage) throws Exception, PersonExistsException {
         System.out.println("Ingresa el dni del/la "+typeOfPerson.toString().toLowerCase()+ " a eliminar");
         int dni = scanner.nextInt();
-        if (!storage.exists(dni)) throw new PersonExistsException("La persona no existe");
+        Persona tempPersona = typeOfPerson.createPersona();
+        String table = tempPersona.table;
+        if (!storage.exists(table, dni)) throw new PersonExistsException("La persona no existe");
         System.out.println("¿Seguro que desea eliminar la persona? (s/n)");
         String confirm = scanner.next();
         while (!confirm.equals("s") && !confirm.equals("n")){ 
@@ -246,7 +250,7 @@ public class CLI implements IUi{
             confirm = scanner.next();
         }
         if(confirm.equals("n")) throw new Exception("No se borrará la persona");
-        return (Persona) storage.get(dni, Persona.class);
+        return (Persona) storage.get(table, dni, Persona.class);
     }
     
     /**
