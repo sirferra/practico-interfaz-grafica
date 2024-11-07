@@ -1,71 +1,59 @@
 package ui;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import exceptions.PersonExistsException;
 import modelo.persona.Cliente;
 import modelo.persona.Persona;
+import modelo.persona.PersonaType;
 import modelo.persona.Proveedor;
 import modelo.persona.Vendedor;
-import negocio.Storage.IStorage;
-import modelo.persona.PersonaType;
-import principal.VentaBici;
-import repositorio.RepositorioDeDatos;
-import util.Tools;
+import negocio.mysql.SimpleORM;
 
-public class CLI implements IUi{
+public class CLI implements IUi {
     private int selectedItem = 0;
     private boolean exit = false;
-    Scanner scanner = new Scanner(System.in);
-    public CLI(){
-        while (!exit){
-            this.render();
+    private final Scanner scanner = new Scanner(System.in);
+    private final SimpleORM storage;
+
+    public CLI(SimpleORM storage) {
+        this.storage = storage;
+        while (!exit) {
+            render();
         }
         scanner.close();
     }
-    public void render(){
-        this.renderMenu();
+
+    public void render() {
+        renderMenu();
     }
 
-    public void renderMenu(){
+    public void renderMenu() {
         System.out.println("=========== Menu =============");
-        System.out.println("0. Imprimir TODO");
         System.out.println("1. Clientes");
         System.out.println("2. Proveedores");
         System.out.println("3. Vendedores");
         System.out.println("4. Salir");
         System.out.println("==============================");
         this.selectedItem = scanner.nextInt();
-        switch (this.selectedItem){ 
-            case 1:
-                this.renderSubMenu(PersonaType.CLIENTE, VentaBici.storage);
-                break;
-            case 2:
-                this.renderSubMenu(PersonaType.PROVEEDOR, VentaBici.storage);
-                break;
-            case 3:
-                this.renderSubMenu(PersonaType.VENDEDOR, VentaBici.storage);
-                break;
-            case 4:
+        
+        switch (this.selectedItem) {
+            case 1 -> renderSubMenu(PersonaType.CLIENTE);
+            case 2 -> renderSubMenu(PersonaType.PROVEEDOR);
+            case 3 -> renderSubMenu(PersonaType.VENDEDOR);
+            case 4 -> {
                 System.out.println("Has seleccionado Salir");
                 exit = true;
-                break;
-            case 0:
-                RepositorioDeDatos.arrPersonas.forEach(p-> System.out.println(p.getClass().getSimpleName() + ":" + p.toString()));
-                break;
-            default:
-                System.out.println("Opcion no valida");
-                break;
+            }
+            default -> System.out.println("Opcion no valida");
         }
         System.out.flush();
         System.out.println();
     }
 
-    public void renderSubMenu(PersonaType entity,IStorage storage){
-        System.out.println("=========== "+entity+" =============");
+    public void renderSubMenu(PersonaType entityType) {
+        System.out.println("=========== " + entityType + " =============");
         System.out.println("1. Crear");
         System.out.println("2. Listar");
         System.out.println("3. Actualizar");
@@ -73,78 +61,52 @@ public class CLI implements IUi{
         System.out.println("5. Volver");
         System.out.println("==============================");
         this.selectedItem = scanner.nextInt();
+        
         try {
-            switch (this.selectedItem){ 
-                case 1:
-                    if(entity == PersonaType.CLIENTE){
-                        Cliente c = (Cliente)this.getDataOfNewPersona(PersonaType.CLIENTE);
-                        storage.create(c.table, Tools.mapFromObject(c));
-                    }else if(entity == PersonaType.PROVEEDOR){
-                        Proveedor p = (Proveedor)this.getDataOfNewPersona(PersonaType.PROVEEDOR);
-                        storage.create(p.table, Tools.mapFromObject(p));
-                    }else if(entity == PersonaType.VENDEDOR){
-                        Vendedor v = (Vendedor)this.getDataOfNewPersona(PersonaType.VENDEDOR);
-                        storage.create(v.table, Tools.mapFromObject(v));
-                    }
-                    System.out.println();
-                    this.renderSubMenu(entity, storage);
-                    break;
-                case 2:
-                    if(entity == PersonaType.CLIENTE){
-                        this.convertCSVToTable(storage.generateCsv(Cliente.class));
-                    }else if(entity == PersonaType.PROVEEDOR){
-                        this.convertCSVToTable(storage.generateCsv(Proveedor.class));
-                    }else if(entity == PersonaType.VENDEDOR){
-                        this.convertCSVToTable(storage.generateCsv(Vendedor.class));
-                    }
-                    //this.convertCSVToTable(storage.generateCsv());
-                    System.out.println();
-                    this.renderSubMenu(entity, storage);
-                    break;
-                case 3:
-                    if(entity == PersonaType.CLIENTE){
-                        Map<String, String> c = this.getDataToUpdatePersona(PersonaType.CLIENTE, storage);
-                        storage.update("clientes", c, Integer.parseInt(c.get("dni")));
-                    }else if(entity == PersonaType.PROVEEDOR){
-                        Map<String, String> p = this.getDataToUpdatePersona(PersonaType.PROVEEDOR, storage);
-                        storage.update("proveedores", p, Integer.parseInt(p.get("dni")));
-                    }else if(entity == PersonaType.VENDEDOR){
-                        Map<String, String> v = this.getDataToUpdatePersona(PersonaType.VENDEDOR, storage);
-                        storage.update("vendedores", v, Integer.parseInt(v.get("dni")));
-                    }
-                    System.out.println();
-                    this.renderSubMenu(entity, storage);
-                    break;
-                case 4:
-                    Persona p = this.getPersonaToDelete(entity,storage);
-                    storage.delete(p.table, p);
-                    System.out.println("Se ha eliminado " + p.getClass().getSimpleName() + ":" + p.toString());
-                    System.out.println();
-                    this.renderSubMenu(entity, storage);
-                    break;
-                case 5:
-                    System.out.println("Has seleccionado Volver");
-                    System.out.println();
-                    break;
-                default:
-                    System.out.flush();
-                    System.out.println("Opcion no valida");
-                    this.renderSubMenu(entity, storage);
-                    break;
-            }        
+            switch (this.selectedItem) {
+                case 1 -> createEntity(entityType);
+                case 2 -> listEntities(entityType);
+                case 3 -> updateEntity(entityType);
+                case 4 -> deleteEntity(entityType);
+                case 5 -> System.out.println("Has seleccionado Volver");
+                default -> {
+                    System.out.println("Opción no válida");
+                    renderSubMenu(entityType);
+                }
+            }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
-            this.renderSubMenu(entity, storage);
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
-    public String checkEmpty(String str,String org){
-        return str.isEmpty() ? org : str;
+    private void createEntity(PersonaType entityType) throws Exception {
+        Persona entity = getDataOfNewPersona(entityType);
+        storage.create(entity);
+        System.out.println(entityType + " creado exitosamente.");
     }
 
+    private void listEntities(PersonaType entityType) throws Exception {
+        String csvData = storage.generateCsv(entityType.createPersona().getClass());
+        convertCSVToTable(csvData);
+    }
 
+    private void updateEntity(PersonaType entityType) throws Exception {
+        Map<String, String> updatedData = getDataToUpdatePersona(entityType);
+        Persona entity = entityType.createPersona();
+        Object idValue = storage.getIdFieldValue(entity);
+        storage.update(updatedData, Integer.parseInt(idValue.toString()));
+        System.out.println(entityType + " actualizado correctamente.");
+    }
 
-    public Persona getDataOfNewPersona(PersonaType typeOfPerson){
+    private void deleteEntity(PersonaType entityType) throws Exception {
+        Persona personaToDelete = getPersonaToDelete(entityType);
+        int idValue = (int) storage.getIdFieldValue(personaToDelete);
+        storage.delete(entityType.getClass(), idValue);
+        System.out.println(entityType + " eliminado correctamente.");
+    }
+
+    public Persona getDataOfNewPersona(PersonaType typeOfPerson) {
+        // Solicitar y capturar los datos básicos
         System.out.println("Ingresa el dni");
         int dni = scanner.nextInt();
         System.out.println("Ingresa el nombre");
@@ -155,104 +117,56 @@ public class CLI implements IUi{
         String email = scanner.next();
         System.out.println("Ingresa el telefono");
         String telefono = scanner.next();
-        switch (typeOfPerson) {
-            case CLIENTE:
-                System.out.println("Ingresa el CUIL");
-                String cuil = scanner.next();
-                return new Cliente(cuil, nombre, apellido, dni, telefono, email);
-            case VENDEDOR:
-                System.out.println("Ingresa la Sucursal que pertenece");
-                String sucursal = scanner.next();
-                return new Vendedor(sucursal, nombre, apellido, dni, telefono, email);
-            case PROVEEDOR:
-                System.out.println("Ingresa el codigo del proveedor");
-                String cod = scanner.next();
-                System.out.println("Ingresa el nombre de Fantasía");
-                String nombreFantasia = scanner.next();
-                System.out.println("Ingresa el CUIT");
-                String cuit = scanner.next();
-                return new Proveedor(cod, nombreFantasia, cuit,nombre, apellido, dni);
-            default:
-                throw new IllegalArgumentException("Tipo de persona no válido");
-        }       
+        
+        // Crear la instancia según el tipo
+        return switch (typeOfPerson) {
+            case CLIENTE -> new Cliente(scanner.next(), nombre, apellido, dni, telefono, email);
+            case VENDEDOR -> new Vendedor(scanner.next(), nombre, apellido, dni, telefono, email);
+            case PROVEEDOR -> new Proveedor(scanner.next(), scanner.next(), scanner.next(), nombre, apellido, dni);
+            default -> throw new IllegalArgumentException("Tipo de persona no válido");
+        };
     }
 
-    public Map<String, String> getDataToUpdatePersona(PersonaType typeOfPerson, IStorage storage) throws Exception {
+    public Map<String, String> getDataToUpdatePersona(PersonaType typeOfPerson) throws Exception {
         System.out.println("Ingresa el dni");
         int dni = scanner.nextInt();
-        System.out.println(typeOfPerson);
-        String table = typeOfPerson.createPersona().table;
-        System.out.println(table);;
-        if (!storage.exists(table, dni)) throw new PersonExistsException("La persona no existe");
-        int id = storage.getId(table, "dni", String.valueOf(dni));
-        System.out.println(id);
-        Persona p = (Persona) storage.get(table, id, typeOfPerson.createPersona().getClass());
-        System.out.println("Ingresa el nombre [" + p.getNombre() + "]");
+        Persona persona = (Persona) storage.findByField(typeOfPerson.createPersona().getClass(),"dni", dni);
+        
+        System.out.println("Ingresa el nombre [" + persona.getNombre() + "]");
         String nombre = scanner.next();
-        System.out.println("Ingresa el apellido [" + p.getApellido() + "]");
+        System.out.println("Ingresa el apellido [" + persona.getApellido() + "]");
         String apellido = scanner.next();
-        System.out.println("Ingresa el email [" + p.getEmail() + "]");
+        System.out.println("Ingresa el email [" + persona.getEmail() + "]");
         String email = scanner.next();
-        System.out.println("Ingresa el telefono [" + p.getTelefono() + "]");
+        System.out.println("Ingresa el telefono [" + persona.getTelefono() + "]");
         String telefono = scanner.next();
+        
+        Map<String, String> updatedData = Map.of(
+            "nombre", checkEmpty(nombre, persona.getNombre()),
+            "apellido", checkEmpty(apellido, persona.getApellido()),
+            "dni", String.valueOf(dni),
+            "telefono", checkEmpty(telefono, persona.getTelefono()),
+            "email", checkEmpty(email, persona.getEmail())
+        );
 
-        Map<String, String> updatedData = new HashMap<>();
-
-        updatedData.put("nombre", checkEmpty(nombre, p.getNombre()));
-        updatedData.put("apellido", checkEmpty(apellido, p.getApellido()));
-        updatedData.put("dni", String.valueOf(dni));
-        updatedData.put("telefono", checkEmpty(telefono, p.getTelefono()));
-        updatedData.put("email", checkEmpty(email, p.getEmail()));
-
-        switch (typeOfPerson) {
-            case CLIENTE:
-                Cliente client = (Cliente) p;
-                System.out.println("Ingresa el CUIL [" + client.getCuil() + "]");
-                String cuil = scanner.next();
-                updatedData.put("cuil", checkEmpty(cuil, client.getCuil()));
-                break;
-            case VENDEDOR:
-                Vendedor vendedor = (Vendedor) p;
-                System.out.println("Ingresa la Sucursal [" + vendedor.getSucursal() + "]");
-                String sucursal = scanner.next();
-                updatedData.put("sucursal", checkEmpty(sucursal, vendedor.getSucursal()));
-                break;
-            case PROVEEDOR:
-                Proveedor proveedor = (Proveedor) p;
-                System.out.println("Ingresa el codigo del proveedor [" + proveedor.getCodigo() + "]");
-                String cod = scanner.next();
-                System.out.println("Ingresa el nombre de Fantasía [" + proveedor.getNombreFantasia() + "]");
-                String nombreFantasia = scanner.next();
-                System.out.println("Ingresa el CUIT [" + proveedor.getCuit() + "]");
-                String cuit = scanner.next();
-                updatedData.put("codigo", checkEmpty(cod, proveedor.getCodigo()));
-                updatedData.put("nombreFantasia", checkEmpty(nombreFantasia, proveedor.getNombreFantasia()));
-                updatedData.put("cuit", checkEmpty(cuit, proveedor.getCuit()));
-                break;
-            default:
-                throw new IllegalArgumentException("Tipo de persona no válido");
+        if (typeOfPerson == PersonaType.CLIENTE) {
+            System.out.println("Ingresa el CUIL [" + ((Cliente) persona).getCuil() + "]");
+            updatedData.put("cuil", checkEmpty(scanner.next(), ((Cliente) persona).getCuil()));
         }
-
+        
         return updatedData;
     }
-    
-    public Persona getPersonaToDelete(PersonaType typeOfPerson, IStorage storage) throws Exception, PersonExistsException {
-        System.out.println("Ingresa el dni del/la "+typeOfPerson.toString().toLowerCase()+ " a eliminar");
+
+    public Persona getPersonaToDelete(PersonaType typeOfPerson) throws Exception {
+        System.out.println("Ingresa el dni del/la " + typeOfPerson + " a eliminar");
         int dni = scanner.nextInt();
-        Persona tempPersona = typeOfPerson.createPersona();
-        String table = tempPersona.table;
-        if (!storage.exists(table, dni)) throw new PersonExistsException("La persona no existe");
-        System.out.println("¿Seguro que desea eliminar la persona? (s/n)");
-        String confirm = scanner.next();
-        while (!confirm.equals("s") && !confirm.equals("n")){ 
-            System.out.println("Opcion no valida "+ confirm);
-            System.out.println("¿Seguro que desea eliminar la persona? (s/n)");
-            confirm = scanner.next();
-        }
-        if(confirm.equals("n")) throw new Exception("No se borrará la persona");
-        return (Persona) storage.get(table, dni, Persona.class);
+        return (Persona) storage.findByField(typeOfPerson.createPersona().getClass(), "dni", dni);
     }
-    
+
+    public String checkEmpty(String input, String defaultValue) {
+        return (input == null || input.trim().isEmpty()) ? defaultValue : input;
+    }
+
     /**
      * Toma un csv en formato String y lo convierte en una tabla
      * en consola

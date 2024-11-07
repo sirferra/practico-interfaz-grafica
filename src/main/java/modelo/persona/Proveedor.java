@@ -1,25 +1,30 @@
 
 package modelo.persona;
 
-import java.util.Calendar;
 import java.util.Map;
 
-import repositorio.RepositorioDeDatos;
+import negocio.mysql.Column;
+import negocio.mysql.Id;
+import negocio.mysql.Table;
 
+@Table(name = "proveedores")
 public class Proveedor extends Persona {
-    private String codigo;
+    @Id
+    @Column(name = "id")
+    private int id;
+
+
+    @Column(name = "nombreFantasia")
     private String nombreFantasia;
+    
+    @Column(name = "cuit")
     private String cuit;
 
-    public Proveedor() {
-        this.table = "proveedores";
-    }
+    public Proveedor() {}
 
     public Proveedor(String codigo, String nombreFantasia, String cuit) {
-        this.codigo = codigo;
         this.nombreFantasia = nombreFantasia;
         this.cuit = cuit;
-        this.table = "proveedores";
     }
 
     @Override
@@ -27,35 +32,13 @@ public class Proveedor extends Persona {
         Map<String, String> map = super.toMap();
         map.put("cuit", cuit); 
         map.put("nombreFantasia", nombreFantasia);
-        map.put("codigo", codigo);
         return map;
     }
 
     public Proveedor(String codigo, String nombreFantasia, String cuit, String nombre, String apellido, int dni) {
         super(nombre, apellido, dni,"", "");
-        this.codigo = codigo;
         this.nombreFantasia = nombreFantasia;
         this.cuit = cuit;
-    }
-
-    @Override
-    public String generarCodigo() {
-        Calendar calendar=Calendar.getInstance();
-        int anio=calendar.get(Calendar.YEAR);
-        return "P-"+anio+"-"+contarProveedores();
-    }
-    
-     private int contarProveedores(){
-        return (RepositorioDeDatos.arrPersonas!=null 
-                && RepositorioDeDatos.arrPersonas.size()==0)?1:RepositorioDeDatos.arrPersonas.size()+1 ;
-    }
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
     }
 
     public String getNombreFantasia() {
@@ -76,7 +59,7 @@ public class Proveedor extends Persona {
    
     @Override
     public String toString(){
-        return super.toString() + ";"+this.codigo+ ";"+this.cuit+";"+this.nombreFantasia;
+        return super.toString() + ";"+this.cuit+";"+this.nombreFantasia;
     }
 
     public static String getHeaders() {

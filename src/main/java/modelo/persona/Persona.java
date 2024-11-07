@@ -4,13 +4,22 @@ package modelo.persona;
 import java.util.HashMap;
 import java.util.Map;
 
+import negocio.mysql.Column;
+import negocio.mysql.Id;
+
 public abstract class Persona {
-    public String table;
-    
+    // @Id
+    // @Column(name = "id")
+    // private int id;
+    @Column(name = "nombre")
     private String nombre;
+    @Column(name = "apellido")
     private String apellido;
+    @Column(name = "dni")
     private int dni;
+    @Column(name = "telefono")
     private String telefono;
+    @Column(name = "email")
     private String email;
 
     public Persona(){
@@ -90,5 +99,4 @@ public abstract class Persona {
     public static String getHeaders(){
         return "NOMBRE;APELLIDO;DNI;TELEFONO;EMAIL";
     }
-    public abstract String generarCodigo();
 }

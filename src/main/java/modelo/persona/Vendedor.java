@@ -3,42 +3,29 @@ package modelo.persona;
 
 import java.util.Map;
 
-import repositorio.RepositorioDeDatos;
+import negocio.mysql.Column;
+import negocio.mysql.Id;
 
 public class Vendedor extends Persona {    
-    private String codigo;
     private String sucursal;
+    @Id
+    @Column(name = "id")
+    private int id;
     
-    
-    public Vendedor(){
-        super();
-        this.table = "vendedores";
-    }
+    public Vendedor(){}
     public Vendedor(String sucursal) {
-        this.codigo = generarCodigo();
         this.sucursal = sucursal;
-        this.table= "vendedores";
     }
         @Override
     public Map<String, String> toMap() {
         Map<String, String> map = super.toMap();
-        map.put("codigo", codigo);
         map.put("sucursal", sucursal);
         return map;
     }
 
     public Vendedor(String sucursal, String nombre, String apellido, int dni, String telefono, String email) {
         super(nombre, apellido, dni, telefono, email);
-        this.codigo = generarCodigo();
         this.sucursal = sucursal;
-    }
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
     }
 
     public String getSucursal() {
@@ -47,16 +34,6 @@ public class Vendedor extends Persona {
 
     public void setSucursal(String sucursal) {
         this.sucursal = sucursal;
-    }
-
-    @Override
-    public String generarCodigo() {
-        return "V-"+count();
-    }
-    
-    private int count(){
-        return (RepositorioDeDatos.arrPersonas!=null 
-                && RepositorioDeDatos.arrPersonas.size()==0)?1:RepositorioDeDatos.arrPersonas.size()+1 ;
     }
 
     @Override

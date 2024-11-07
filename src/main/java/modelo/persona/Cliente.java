@@ -2,19 +2,21 @@ package modelo.persona;
 
 import java.util.Map;
 
-import repositorio.RepositorioDeDatos;
+import negocio.mysql.Column;
+import negocio.mysql.Id;
+import negocio.mysql.Table;
 
-
-
+@Table(name = "clientes")
 public class Cliente extends Persona{
-    private String codigo;
+    @Id
+    @Column(name = "id")
+    private int id;
+    
+    @Column(name = "cuil")
     private String cuil;
     
     
-    public Cliente(){
-        super();
-        this.table = "clientes";
-    }
+    public Cliente(){}
 
     @Override
     public Map<String, String> toMap() {
@@ -24,23 +26,12 @@ public class Cliente extends Persona{
     }
             
     public Cliente(String cuil) {
-        this.codigo = generarCodigo();
         this.cuil = cuil;
-        this.table = "clientes";
     }
 
     public Cliente(String cuil, String nombre, String apellido, int dni, String telefono, String email) {
         super(nombre, apellido, dni, telefono, email);
-        this.codigo = generarCodigo();
         this.cuil = cuil;
-    }
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
     }
 
     public String getCuil() {
@@ -51,22 +42,10 @@ public class Cliente extends Persona{
         this.cuil = cuil;
     }
 
-    @Override
-    public String generarCodigo() {
-       return "C-"+contarClientes();
-    }
-    
-    private int contarClientes(){
-        Cliente[] arrClients = RepositorioDeDatos.arrPersonas
-                                .stream()
-                                .filter(p-> p instanceof Cliente)
-                                .toArray(Cliente[]::new);
-        return arrClients.length;
-    }
     
     @Override
     public String toString(){
-        return super.toString() + ";"+this.codigo+ ";"+this.cuil;
+        return super.toString() + ";"+this.cuil;
     }
 
     public static String getHeaders() {
