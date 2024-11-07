@@ -1,6 +1,7 @@
 package ui;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -53,29 +54,36 @@ public class CLI implements IUi {
     }
 
     public void renderSubMenu(PersonaType entityType) {
-        System.out.println("=========== " + entityType + " =============");
-        System.out.println("1. Crear");
-        System.out.println("2. Listar");
-        System.out.println("3. Actualizar");
-        System.out.println("4. Eliminar");
-        System.out.println("5. Volver");
-        System.out.println("==============================");
-        this.selectedItem = scanner.nextInt();
+        boolean exit = false;
+        while(!exit) {  
+            System.out.println("=========== " + entityType + " =============");
+            System.out.println("1. Crear");
+            System.out.println("2. Listar");
+            System.out.println("3. Actualizar");
+            System.out.println("4. Eliminar");
+            System.out.println("5. Volver");
+            System.out.println("==============================");
+            this.selectedItem = scanner.nextInt();
         
-        try {
-            switch (this.selectedItem) {
-                case 1 -> createEntity(entityType);
-                case 2 -> listEntities(entityType);
-                case 3 -> updateEntity(entityType);
-                case 4 -> deleteEntity(entityType);
-                case 5 -> System.out.println("Has seleccionado Volver");
-                default -> {
-                    System.out.println("Opción no válida");
-                    renderSubMenu(entityType);
+            try {
+                switch (this.selectedItem) {
+                    case 1 -> createEntity(entityType);
+                    case 2 -> listEntities(entityType);
+                    case 3 -> updateEntity(entityType);
+                    case 4 -> deleteEntity(entityType);
+                    case 5 -> {
+                        System.out.println("Has seleccionado Volver");
+                        exit = true;
+                    }
+                    default -> {
+                        System.out.println("Opción no válida");
+                        renderSubMenu(entityType);
+                    }
                 }
+            
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
             }
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
         }
     }
 
@@ -93,14 +101,14 @@ public class CLI implements IUi {
     private void updateEntity(PersonaType entityType) throws Exception {
         Map<String, String> updatedData = getDataToUpdatePersona(entityType);
         Persona entity = entityType.createPersona();
-        Object idValue = storage.getIdFieldValue(entity);
-        storage.update(updatedData, Integer.parseInt(idValue.toString()));
+        Object idValue = storage.getIdFieldValue(entity, updatedData.get("dni"), "dni");
+        storage.update(entity, updatedData, Integer.parseInt(idValue.toString()));
         System.out.println(entityType + " actualizado correctamente.");
     }
 
     private void deleteEntity(PersonaType entityType) throws Exception {
         Persona personaToDelete = getPersonaToDelete(entityType);
-        int idValue = (int) storage.getIdFieldValue(personaToDelete);
+        int idValue = (int) storage.getIdFieldValue(entityType.createPersona(), String.valueOf(personaToDelete.getDni()), "dni");
         storage.delete(entityType.getClass(), idValue);
         System.out.println(entityType + " eliminado correctamente.");
     }
@@ -120,9 +128,23 @@ public class CLI implements IUi {
         
         // Crear la instancia según el tipo
         return switch (typeOfPerson) {
-            case CLIENTE -> new Cliente(scanner.next(), nombre, apellido, dni, telefono, email);
-            case VENDEDOR -> new Vendedor(scanner.next(), nombre, apellido, dni, telefono, email);
-            case PROVEEDOR -> new Proveedor(scanner.next(), scanner.next(), scanner.next(), nombre, apellido, dni);
+            case CLIENTE -> {
+                System.out.println("Ingresa el CUIL");
+                String cuil = scanner.next();
+                yield new Cliente(cuil, nombre, apellido, dni, telefono, email);
+            }
+            case VENDEDOR -> {
+                System.out.println("Ingresa la sucursal");
+                String sucursal = scanner.next();
+                yield new Vendedor(sucursal, nombre, apellido, dni, telefono, email);
+            }
+            case PROVEEDOR -> {
+                System.out.println("Ingresa el Nombre Fantasía");
+                String nombreFantasia = scanner.next();
+                System.out.println("Ingresa el CUIT");
+                String cuit = scanner.next();
+                yield new Proveedor(nombreFantasia, cuit, nombre, apellido, dni);
+            }
             default -> throw new IllegalArgumentException("Tipo de persona no válido");
         };
     }
@@ -141,17 +163,25 @@ public class CLI implements IUi {
         System.out.println("Ingresa el telefono [" + persona.getTelefono() + "]");
         String telefono = scanner.next();
         
-        Map<String, String> updatedData = Map.of(
-            "nombre", checkEmpty(nombre, persona.getNombre()),
-            "apellido", checkEmpty(apellido, persona.getApellido()),
-            "dni", String.valueOf(dni),
-            "telefono", checkEmpty(telefono, persona.getTelefono()),
-            "email", checkEmpty(email, persona.getEmail())
-        );
+        Map<String, String> updatedData = new HashMap<>();
+        updatedData.put("nombre", checkEmpty(nombre, persona.getNombre()));
+        updatedData.put("apellido", checkEmpty(apellido, persona.getApellido()));
+        updatedData.put("dni", String.valueOf(dni));
+        updatedData.put("telefono", checkEmpty(telefono, persona.getTelefono()));
+        updatedData.put("email", checkEmpty(email, persona.getEmail()));
 
         if (typeOfPerson == PersonaType.CLIENTE) {
             System.out.println("Ingresa el CUIL [" + ((Cliente) persona).getCuil() + "]");
-            updatedData.put("cuil", checkEmpty(scanner.next(), ((Cliente) persona).getCuil()));
+            String cuil = checkEmpty(scanner.next(),((Cliente) persona).getCuil()); 
+            updatedData.put("cuil", cuil);
+        } else if (typeOfPerson == PersonaType.VENDEDOR) {
+            System.out.println("Ingresa la sucursal [" + ((Vendedor) persona).getSucursal() + "]");
+            updatedData.put("sucursal", checkEmpty(scanner.next(), ((Vendedor) persona).getSucursal()));
+        } else if (typeOfPerson == PersonaType.PROVEEDOR) {
+            System.out.println("Ingresa el CUIT [" + ((Proveedor) persona).getCuit() + "]");
+            updatedData.put("cuit", checkEmpty(scanner.next(), ((Proveedor) persona).getCuit()));
+            System.out.println("Ingresa el nombre fantasía [" + ((Proveedor) persona).getNombreFantasia() + "]");
+            updatedData.put("nombreFantasia", checkEmpty(scanner.next(), ((Proveedor) persona).getNombreFantasia()));
         }
         
         return updatedData;

@@ -8,9 +8,9 @@ import negocio.mysql.Column;
 import negocio.mysql.Id;
 
 public abstract class Persona {
-    // @Id
-    // @Column(name = "id")
-    // private int id;
+    @Id
+    @Column(name = "id")
+    private int id;
     @Column(name = "nombre")
     private String nombre;
     @Column(name = "apellido")
@@ -26,7 +26,16 @@ public abstract class Persona {
         super();
     }
     
+    public Persona(int id, String nombre, String apellido, int dni, String telefono, String email) {
+        this.id = id;
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.dni = dni;
+        this.telefono = telefono;
+        this.email = email;
+    }
     public Persona(String nombre, String apellido, int dni, String telefono, String email) {
+        this.id = -1;
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;

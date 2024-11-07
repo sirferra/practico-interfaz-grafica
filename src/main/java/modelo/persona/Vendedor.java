@@ -4,13 +4,12 @@ package modelo.persona;
 import java.util.Map;
 
 import negocio.mysql.Column;
-import negocio.mysql.Id;
+import negocio.mysql.Table;
 
+@Table(name = "vendedores")
 public class Vendedor extends Persona {    
+    @Column(name = "sucursal")
     private String sucursal;
-    @Id
-    @Column(name = "id")
-    private int id;
     
     public Vendedor(){}
     public Vendedor(String sucursal) {

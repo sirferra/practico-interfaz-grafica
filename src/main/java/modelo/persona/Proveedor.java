@@ -4,14 +4,10 @@ package modelo.persona;
 import java.util.Map;
 
 import negocio.mysql.Column;
-import negocio.mysql.Id;
 import negocio.mysql.Table;
 
 @Table(name = "proveedores")
 public class Proveedor extends Persona {
-    @Id
-    @Column(name = "id")
-    private int id;
 
 
     @Column(name = "nombreFantasia")
@@ -22,7 +18,7 @@ public class Proveedor extends Persona {
 
     public Proveedor() {}
 
-    public Proveedor(String codigo, String nombreFantasia, String cuit) {
+    public Proveedor(String nombreFantasia, String cuit) {
         this.nombreFantasia = nombreFantasia;
         this.cuit = cuit;
     }
@@ -35,7 +31,7 @@ public class Proveedor extends Persona {
         return map;
     }
 
-    public Proveedor(String codigo, String nombreFantasia, String cuit, String nombre, String apellido, int dni) {
+    public Proveedor(String nombreFantasia, String cuit, String nombre, String apellido, int dni) {
         super(nombre, apellido, dni,"", "");
         this.nombreFantasia = nombreFantasia;
         this.cuit = cuit;

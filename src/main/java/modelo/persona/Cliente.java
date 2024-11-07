@@ -3,15 +3,11 @@ package modelo.persona;
 import java.util.Map;
 
 import negocio.mysql.Column;
-import negocio.mysql.Id;
 import negocio.mysql.Table;
 
 @Table(name = "clientes")
 public class Cliente extends Persona{
-    @Id
-    @Column(name = "id")
-    private int id;
-    
+
     @Column(name = "cuil")
     private String cuil;
     
