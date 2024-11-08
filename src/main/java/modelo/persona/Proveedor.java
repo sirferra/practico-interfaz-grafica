@@ -6,11 +6,11 @@ import java.util.Map;
 import negocio.mysql.Column;
 import negocio.mysql.Table;
 
-@Table(name = "proveedores")
+@Table(name = "proveedor")
 public class Proveedor extends Persona {
 
 
-    @Column(name = "nombreFantasia")
+    @Column(name = "nombre_fantasia")
     private String nombreFantasia;
     
     @Column(name = "cuit")

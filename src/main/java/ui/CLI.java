@@ -36,6 +36,7 @@ public class CLI implements IUi {
         System.out.println("2. Proveedores");
         System.out.println("3. Vendedores");
         System.out.println("4. Salir");
+        System.out.println("5. Llenar base de datos");
         System.out.println("==============================");
         this.selectedItem = scanner.nextInt();
         
@@ -47,6 +48,7 @@ public class CLI implements IUi {
                 System.out.println("Has seleccionado Salir");
                 exit = true;
             }
+            case 5 -> storage.seed();
             default -> System.out.println("Opcion no valida");
         }
         System.out.flush();

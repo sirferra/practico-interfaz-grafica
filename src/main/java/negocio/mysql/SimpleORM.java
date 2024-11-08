@@ -1,6 +1,9 @@
 package negocio.mysql;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,6 +16,18 @@ public class SimpleORM {
 
     public SimpleORM(Connection connection) {
         this.connection = connection;
+        try{
+            checkForDatabase();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        try{
+            connection.setCatalog("ventas_bicicletas");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
     public <T> boolean create(T entity) throws Exception {
@@ -162,6 +177,18 @@ public class SimpleORM {
         return null;
     }
 
+    public void addHeaders(Class<?> currentClass, List<String> columnNames, StringBuilder header) {
+        for (Field field : currentClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(Column.class)) {
+                Column column = field.getAnnotation(Column.class);
+                columnNames.add(column.name());
+                if (header.length() > 0)
+                    header.append(";");
+                header.append(column.name().toUpperCase());                    
+            }
+        }
+    }
+
     public <T> String generateCsv(Class<T> type) throws Exception {
         // Obtener la anotación de la tabla
         Table table = type.getAnnotation(Table.class);
@@ -172,23 +199,11 @@ public class SimpleORM {
         List<String> columnNames = new ArrayList<>();
         StringBuilder header = new StringBuilder();
 
-        // Iterar sobre los campos de la clase y sus superclases
-        Class<?> currentClass = type.getSuperclass();
-        while (currentClass != null) {
-            for (Field field : currentClass.getDeclaredFields()) {
-                if (field.isAnnotationPresent(Column.class)) {
-                    Column column = field.getAnnotation(Column.class);
-                    columnNames.add(column.name());
-                    if (header.length() > 0)
-                        header.append(";");
-                    header.append(column.name().toUpperCase()); // Agregar el nombre de la columna al encabezado
-                }
-            }
-            if(currentClass == type){
-                currentClass = null;
-            }
-            currentClass = type;// Moverse a la superclase
-        }
+        // Iterar sobre los campos de la clase y sus superclases (reviso si es null por si acaso)
+        if(type.getSuperclass() != null)
+            this.addHeaders(type.getSuperclass(), columnNames, header);
+        
+        this.addHeaders(type, columnNames, header);
 
         // Crear la consulta SQL dinámica
         String sql = "SELECT * FROM " + table.name();
@@ -218,4 +233,59 @@ public class SimpleORM {
         return csv.toString();
     }
 
+    public void checkForDatabase() throws SQLException{
+        DatabaseMetaData metaData = this.connection.getMetaData();
+        ResultSet rs = metaData.getCatalogs();
+        boolean databaseExists = false;
+        while (rs.next()) {
+            String databaseName = rs.getString("TABLE_CAT");
+            if (databaseName.equals("ventas_bicicletas")) {
+                databaseExists = true;
+                break;
+            }
+        }
+        if(!databaseExists){
+            try {
+                Statement stmt = connection.createStatement();
+                stmt.execute("CREATE DATABASE IF NOT EXISTS ventas_bicicletas");
+            } catch (SQLException e) {
+                System.err.println("Error al crear base de datos y tablas: " + e.getMessage());
+            } 
+        }
+        createTables();
+    }
+
+    public void createTables() throws SQLException {
+        try{
+            Statement stmt = connection.createStatement();
+            stmt.execute("USE ventas_bicicletas");
+            String[] sqlCommands = Files.readString(Paths.get("src/main/resources/dump.sql")).split(";");
+            for (String command : sqlCommands) {
+                try{
+                    stmt.execute(command);
+                }catch(SQLException e){
+                    continue;
+                }
+            }
+        }catch (IOException e) {
+            System.err.println("Error al leer archivo SQL: " + e.getMessage());
+        }
+    }
+
+    public void seed(){
+        try{
+            String [] sqlCommands = Files.readString(Paths.get("src/main/resources/seed.sql")).split(";");
+            for (String command : sqlCommands) {
+                try{
+                    Statement stmt = connection.createStatement();
+                    stmt.execute(command);
+                }catch(SQLException e){
+                    System.err.println("Error al ejecutar comando SQL: " + e.getMessage());
+                    continue;
+                }
+            }
+        }catch (IOException e) {
+            e.printStackTrace();
+        } 
+    }
 }

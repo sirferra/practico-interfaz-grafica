@@ -6,7 +6,7 @@ import java.util.Map;
 import negocio.mysql.Column;
 import negocio.mysql.Table;
 
-@Table(name = "vendedores")
+@Table(name = "vendedor")
 public class Vendedor extends Persona {    
     @Column(name = "sucursal")
     private String sucursal;
