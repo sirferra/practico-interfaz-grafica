@@ -109,9 +109,9 @@ public class CLI implements IUi {
     }
 
     private void deleteEntity(PersonaType entityType) throws Exception {
-        Persona personaToDelete = getPersonaToDelete(entityType);
-        int idValue = (int) storage.getIdFieldValue(entityType.createPersona(), String.valueOf(personaToDelete.getDni()), "dni");
-        storage.delete(entityType.getClass(), idValue);
+        int dni = getPersonaToDelete(entityType);
+        int idValue = (int) storage.getIdFieldValue(entityType.createPersona(), String.valueOf(dni), "dni");
+        storage.delete(entityType.createPersona().getClass(), idValue);
         System.out.println(entityType + " eliminado correctamente.");
     }
 
@@ -189,10 +189,10 @@ public class CLI implements IUi {
         return updatedData;
     }
 
-    public Persona getPersonaToDelete(PersonaType typeOfPerson) throws Exception {
+    public int getPersonaToDelete(PersonaType typeOfPerson) throws Exception {
         System.out.println("Ingresa el dni del/la " + typeOfPerson + " a eliminar");
         int dni = scanner.nextInt();
-        return (Persona) storage.findByField(typeOfPerson.createPersona().getClass(), "dni", dni);
+        return dni;
     }
 
     public String checkEmpty(String input, String defaultValue) {

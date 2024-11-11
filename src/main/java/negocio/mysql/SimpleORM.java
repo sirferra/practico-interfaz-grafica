@@ -50,6 +50,8 @@ public class SimpleORM {
             }
             currentClass = currentClass.getSuperclass(); // Moverse a la superclase
         }
+        // remove id from columns
+        columns.remove("id");
 
         String sql = "INSERT INTO " + table.name() + " (" + String.join(",", columns.keySet()) + ") VALUES ("
                 + String.join(",", columns.keySet().stream().map(k -> "?").toArray(String[]::new)) + ")";
@@ -246,6 +248,7 @@ public class SimpleORM {
         }
         if(!databaseExists){
             try {
+                System.out.println("Creando Base De datos y tablas...");
                 Statement stmt = connection.createStatement();
                 stmt.execute("CREATE DATABASE IF NOT EXISTS ventas_bicicletas");
             } catch (SQLException e) {
@@ -274,10 +277,11 @@ public class SimpleORM {
 
     public void seed(){
         try{
-            String [] sqlCommands = Files.readString(Paths.get("src/main/resources/seed.sql")).split(";");
+            String [] sqlCommands = Files.readString(Paths.get("src/main/resources/migration.sql")).split(";");
             for (String command : sqlCommands) {
                 try{
                     Statement stmt = connection.createStatement();
+                    stmt.execute("USE ventas_bicicletas");
                     stmt.execute(command);
                 }catch(SQLException e){
                     System.err.println("Error al ejecutar comando SQL: " + e.getMessage());
