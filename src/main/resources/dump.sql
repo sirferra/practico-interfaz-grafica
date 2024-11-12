@@ -24,14 +24,19 @@ CREATE TABLE IF NOT EXISTS proveedor (
 );
 CREATE TABLE IF NOT EXISTS producto (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(255),
     nombre VARCHAR(255) NOT NULL,
     descripcion VARCHAR(255),
     categoria_id INT NOT NULL,
-    modelo_id INT,
     proveedor_id INT NOT NULL,
+    precio DOUBLE,
+    imagen VARCHAR(255),
+    etiquetas JSON,
+    stock INT,
+    modelo_id INT,
     FOREIGN KEY (categoria_id) REFERENCES categoria(id),
-    FOREIGN KEY (modelo_id) REFERENCES modelo(id),
-    FOREIGN KEY (proveedor_id) REFERENCES proveedor(id)
+    FOREIGN KEY (proveedor_id) REFERENCES proveedor(id),
+    FOREIGN KEY (modelo_id) REFERENCES modelo(id)
 );
 
 CREATE TABLE IF NOT EXISTS vendedor (

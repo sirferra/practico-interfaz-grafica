@@ -63,7 +63,7 @@ public class SimpleORM {
             return stmt.executeUpdate() > 0;
         }
     }
-
+    
     public <T> T findById(Class<T> clazz, int id) throws Exception {
         Table table = clazz.getAnnotation(Table.class);
         if (table == null)
@@ -179,6 +179,22 @@ public class SimpleORM {
         return null;
     }
 
+    
+    public <T> int count(Class<T> clazz) throws Exception {
+        Table table = clazz.getAnnotation(Table.class);
+        if (table == null)
+            throw new RuntimeException("La clase no está anotada con @Table");
+
+        String sql = "SELECT COUNT(*) as cantidad FROM " + table.name();
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("cantidad");
+                }
+            }
+        }
+        return 0;
+    }
     public void addHeaders(Class<?> currentClass, List<String> columnNames, StringBuilder header) {
         for (Field field : currentClass.getDeclaredFields()) {
             if (field.isAnnotationPresent(Column.class)) {
