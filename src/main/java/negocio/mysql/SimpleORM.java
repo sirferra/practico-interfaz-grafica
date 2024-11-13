@@ -293,19 +293,91 @@ public class SimpleORM {
 
     public void seed(){
         try{
+            System.out.println("Llenando base de datos...");
+            Statement stmt = connection.createStatement();
+            stmt.execute("USE ventas_bicicletas");
+            stmt.execute("DROP DATABASE IF EXISTS ventas_bicicletas");
+            stmt.execute("CREATE DATABASE IF NOT EXISTS ventas_bicicletas");
+            createTables();
+            stmt.execute("USE ventas_bicicletas");
             String [] sqlCommands = Files.readString(Paths.get("src/main/resources/migration.sql")).split(";");
             for (String command : sqlCommands) {
                 try{
-                    Statement stmt = connection.createStatement();
-                    stmt.execute("USE ventas_bicicletas");
                     stmt.execute(command);
                 }catch(SQLException e){
                     System.err.println("Error al ejecutar comando SQL: " + e.getMessage());
                     continue;
                 }
             }
-        }catch (IOException e) {
+        }catch (IOException|SQLException e) {
             e.printStackTrace();
         } 
+    }
+
+
+    public Object[][] getAll(Class<?> class1, String _sql) {
+        try {
+            String sql= "";
+            if(_sql != null){
+                sql = _sql;
+            }else{
+                sql = "SELECT * FROM " + class1.getAnnotation(Table.class).name();
+            }
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            List<Object[]> data = new ArrayList<>();
+            
+            while (rs.next()) {
+                Object[] row = new Object[columnCount];
+                for (int i = 0; i < columnCount; i++) {
+                    row[i] = rs.getObject(i + 1);
+                }
+                data.add(row);
+            }
+            
+            // Crear el arreglo Object[][] manualmente
+            Object[][] result = new Object[data.size()][columnCount];
+            for (int i = 0; i < data.size(); i++) {
+                result[i] = data.get(i);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String getTotalPedido(int idPedido) {
+        try {
+            String sql = "Select SUM(p.precio) as total from detalle_pedido dp inner join producto p on dp.producto_id = p.id  where dp.pedido_id = ?";
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            stmt.setInt(1, idPedido);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return String.valueOf(rs.getDouble("total"));
+            }
+            return "0";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "0";
+        }
+    }
+    
+    public String getProductoMasVendido() {
+        try {
+            String sql = "SELECT p.nombre, SUM(dp.cantidad) as cantidad FROM detalle_pedido dp INNER JOIN producto p ON dp.producto_id = p.id GROUP BY p.nombre ORDER BY cantidad DESC LIMIT 1";
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("nombre")+ ":" + rs.getInt("cantidad");
+            }
+            return "-";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "-";
+        }
     }
 }

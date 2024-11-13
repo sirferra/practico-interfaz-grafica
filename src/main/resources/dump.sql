@@ -31,14 +31,13 @@ CREATE TABLE IF NOT EXISTS producto (
     proveedor_id INT NOT NULL,
     precio DOUBLE,
     imagen VARCHAR(255),
-    etiquetas JSON,
+    etiquetas VARCHAR(255),
     stock INT,
     modelo_id INT,
     FOREIGN KEY (categoria_id) REFERENCES categoria(id),
     FOREIGN KEY (proveedor_id) REFERENCES proveedor(id),
     FOREIGN KEY (modelo_id) REFERENCES modelo(id)
 );
-
 CREATE TABLE IF NOT EXISTS vendedor (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -64,6 +63,7 @@ CREATE TABLE IF NOT EXISTS pedido (
     vendedor_id INT NOT NULL,
     fecha DATE NOT NULL,
     total DECIMAL(10,2) NOT NULL,
+    estado VarChar(25) NOT NULL,
     FOREIGN KEY (cliente_id) REFERENCES cliente(id),
     FOREIGN KEY (vendedor_id) REFERENCES vendedor(id)
 );

@@ -10,21 +10,26 @@ public class Cliente extends Persona{
 
     @Column(name = "cuil")
     private String cuil;
-    
-    
     public Cliente(){}
-
     @Override
     public Map<String, String> toMap() {
         Map<String, String> map = super.toMap();
         map.put("cuil", cuil); 
         return map;
-    }
-            
+    }   
     public Cliente(String cuil) {
         this.cuil = cuil;
     }
 
+    /**
+     * Constructor de la clase
+     * @param cuil
+     * @param nombre
+     * @param apellido
+     * @param dni
+     * @param telefono
+     * @param email
+     */
     public Cliente(String cuil, String nombre, String apellido, int dni, String telefono, String email) {
         super(nombre, apellido, dni, telefono, email);
         this.cuil = cuil;
@@ -45,6 +50,6 @@ public class Cliente extends Persona{
     }
 
     public static String getHeaders() {
-        return Persona.getHeaders() +";CODIGO;CUIL";
+        return Persona.getHeaders() +";CUIL";
     }
 }

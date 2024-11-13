@@ -12,7 +12,7 @@ public class VentaBici {
     public static void main(String[] args) {
         SimpleORM db = getOrm();
         
-        // renderUI = new CLI(db);
+        //renderUI = new CLI(db);
         renderUI = new MainGUI(db);
     }   
     public static SimpleORM getOrm() {

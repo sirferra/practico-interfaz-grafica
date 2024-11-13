@@ -2,6 +2,7 @@ package ui.GUI;
 import javax.swing.*;
 import negocio.mysql.SimpleORM;
 import ui.IUi;
+import ui.GUI.Views.HomeView;
 public class MainGUI implements IUi {
     public static SimpleORM db;
     
@@ -12,7 +13,7 @@ public class MainGUI implements IUi {
 
     @Override
     public void render() {
-        SwingUtilities.invokeLater(() -> new MainUI(Views.HOME));
+        SwingUtilities.invokeLater(() -> new MainUI(new HomeView()));
     }
     
 }

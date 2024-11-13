@@ -22,6 +22,8 @@ public class Pedido {
     @Column(name = "detalles")
     public List<DetallePedido> detalles;
 
+    public Pedido() {}
+
     public Pedido(Date fecha, Vendedor vendedor, Cliente cliente, EstadoPedido estado, double totalPedido, List<DetallePedido> detalles) {
         this.fecha = fecha;
         this.vendedor = vendedor;

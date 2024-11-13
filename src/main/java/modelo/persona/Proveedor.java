@@ -36,6 +36,11 @@ public class Proveedor extends Persona {
         this.nombreFantasia = nombreFantasia;
         this.cuit = cuit;
     }
+    public Proveedor(String nombreFantasia, String cuit, String nombre, String apellido, int dni, String telefono, String email) {
+        super(nombre, apellido, dni,telefono, email);
+        this.nombreFantasia = nombreFantasia;
+        this.cuit = cuit;
+    }
 
     public String getNombreFantasia() {
         return nombreFantasia;
@@ -59,6 +64,6 @@ public class Proveedor extends Persona {
     }
 
     public static String getHeaders() {
-        return Persona.getHeaders()+";CODIGO;CUIT;NOMBRE FANTASIA";
+        return Persona.getHeaders()+";CUIT;NOMBRE FANTASIA";
     }
 }
