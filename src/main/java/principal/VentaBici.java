@@ -10,6 +10,8 @@ public class VentaBici {
     public static IUi renderUI;
     
     public static void main(String[] args) {
+        System.out.println("Venta de bicicletas");
+        System.out.println("==================");
         SimpleORM db = getOrm();
         
         //renderUI = new CLI(db);

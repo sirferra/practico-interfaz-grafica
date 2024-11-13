@@ -7,6 +7,7 @@ public class MainGUI implements IUi {
     public static SimpleORM db;
     
     public MainGUI(SimpleORM db) {
+        System.out.println("MainGUI");
         MainGUI.db = db;
         this.render();
     }

@@ -85,6 +85,7 @@ public class SalesView implements IView {
 
         JButton newSaleButton = new JButton("Nueva venta");
         newSaleButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        newSaleButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         newSaleButton.setBackground(Colors.getMorningGlory("500"));
         newSaleButton.setOpaque(true);
         newSaleButton.setForeground(Colors.getMorningGlory("50"));
@@ -102,7 +103,7 @@ public class SalesView implements IView {
             newSaleFrame.setVisible(true);
         });
 
-        mainPanel.add(newSaleButton);
+        mainPanel.add(newSaleButton, BorderLayout.CENTER);
         return mainPanel;
     }
 
