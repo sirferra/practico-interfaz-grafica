@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class SimpleORM {
 
     private Connection connection;
@@ -350,9 +351,42 @@ public class SimpleORM {
         }
     }
 
+    public List<?> getAll(Class<?> clazz) {
+        try {
+            String sql = "SELECT * FROM " + clazz.getAnnotation(Table.class).name();
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+            List<Object> data = new ArrayList<>();
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            while (rs.next()) {
+                Object instance = clazz.getDeclaredConstructor().newInstance();
+                Class<?> currentClass = clazz;
+                while (currentClass != null) {
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = metaData.getColumnName(i);
+                        try {
+                            Field field = currentClass.getDeclaredField(columnName);
+                            field.setAccessible(true);
+                            field.set(instance, rs.getObject(i));
+                        } catch (NoSuchFieldException e) {
+                            // Continue searching in the superclass
+                        }
+                    }
+                    currentClass = currentClass.getSuperclass();
+                }
+                data.add(instance);
+            }
+            return data;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public String getTotalPedido(int idPedido) {
         try {
-            String sql = "Select SUM(p.precio) as total from detalle_pedido dp inner join producto p on dp.producto_id = p.id  where dp.pedido_id = ?";
+            String sql = "Select total from pedido where id = ?";
             PreparedStatement stmt = connection.prepareStatement(sql);
             stmt.setInt(1, idPedido);
             ResultSet rs = stmt.executeQuery();
@@ -380,4 +414,42 @@ public class SimpleORM {
             return "-";
         }
     }
+
+    public void saveSale(String clienteId, String vendedorId, String fecha, List<Object[]> productosFromTable) throws SQLException {
+        // Insert new sale into 'pedido' table
+        String insertPedidoSql = "INSERT INTO pedido (cliente_id, vendedor_id, fecha, total, estado) VALUES (?, ?, ?, ?, ?)";
+        PreparedStatement pedidoStmt = connection.prepareStatement(insertPedidoSql, Statement.RETURN_GENERATED_KEYS);
+        pedidoStmt.setInt(1, Integer.parseInt(clienteId));
+        pedidoStmt.setInt(2, Integer.parseInt(vendedorId));
+        pedidoStmt.setDate(3, Date.valueOf(fecha));
+        
+        double total = productosFromTable.stream().mapToDouble(p -> (double) p[3]).sum();
+        pedidoStmt.setDouble(4, total);
+        pedidoStmt.setString(5, "PREPARACION");
+        
+        pedidoStmt.executeUpdate();
+        ResultSet generatedKeys = pedidoStmt.getGeneratedKeys();
+        if (generatedKeys.next()) {
+            int pedidoId = generatedKeys.getInt(1);
+            
+            // Insert each product into 'detalle_pedido' table
+            String insertDetalleSql = "INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio) VALUES (?, ?, ?, ?)";
+            PreparedStatement detalleStmt = connection.prepareStatement(insertDetalleSql);
+            for (Object[] producto : productosFromTable) {
+                int productoId =(int) producto[0]; 
+                int cantidad = (int) producto[2];
+                double precio = (double) producto[3];
+                
+                detalleStmt.setInt(1, pedidoId);
+                detalleStmt.setInt(2, productoId);
+                detalleStmt.setInt(3, cantidad);
+                detalleStmt.setDouble(4, precio);
+                detalleStmt.addBatch();
+            }
+            detalleStmt.executeBatch();
+        }
+    
+    }
+
+    
 }

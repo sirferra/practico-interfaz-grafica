@@ -53,6 +53,10 @@ public abstract class Persona {
         return map;
     }
 
+    public int getId() {        
+        return id;
+    }
+
     public String getNombre() {
         return nombre;
     }

@@ -2,6 +2,8 @@ package ui.GUI.Views;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import modelo.pedido.DetallePedido;
 import modelo.pedido.Pedido;
@@ -11,10 +13,14 @@ import ui.GUI.Constants.Colors;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+import java.sql.Date;
+import java.util.Arrays;
+import java.util.Comparator;
 public class SalesView implements IView {
     Object[][] ventas = new Object[][]{};
     Object[][] detalles = new Object[][]{};
+    Object[][] filteredVentas = new Object[][]{};
+    Object[][] filteredDetalles = new Object[][]{};
     JPanel ventasPanel = null;
     String total = "0.00";
     String mostSoldProduct = "-";
@@ -32,8 +38,71 @@ public class SalesView implements IView {
         JPanel clientePanel = createSection("Cliente", "Nombre", "Apellido");
         mainPanel.add(clientePanel);
         mainPanel.add(Box.createVerticalStrut(10));
-        JPanel ventaPanel = createVentaSection();
+        JPanel ventaTitlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        JLabel ventaTitle = new JLabel("Venta");
+        ventaTitle.setFont(new Font("Arial", Font.BOLD, 14));
+        ventaTitlePanel.add(ventaTitle); 
+
+        JPanel ventaFilterPanel = new JPanel();
+        ventaFilterPanel.setLayout(new BoxLayout(ventaFilterPanel, BoxLayout.Y_AXIS));
+        ventaFilterPanel.add(ventaTitlePanel);
+        JPanel filterPanel = new JPanel(new GridLayout(1, 3, 10, 10));
+        filterPanel.add(createLabeledTextField("Producto", text -> {
+            if(text.isEmpty()) {
+                repaintPanel(this.detalles, this.ventas);
+                return;
+            };
+            this.filteredDetalles = Arrays.stream(this.detalles)
+                .filter(row -> row[0].toString().toLowerCase().contains(text.toLowerCase()))
+                .toArray(Object[][]::new);
+            repaintPanel(this.filteredDetalles, this.ventas);
+        }));
+        filterPanel.add(createLabeledTextField("fecha desde",text->{ 
+            if(text.isEmpty() || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))) {
+                repaintPanel(this.detalles, this.ventas);
+                return;
+            };
+            this.filteredVentas = Arrays.stream(this.ventas)
+                .filter(row -> ((Date)row[4]).after(java.sql.Date.valueOf(text)))
+                .toArray(Object[][]::new);
+            repaintPanel(this.detalles, this.filteredVentas);
+        }));
+        filterPanel.add(createLabeledTextField("fecha hasta",text->{ 
+            if(text.isEmpty() || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))) {
+                repaintPanel(this.detalles, this.ventas);
+                return;
+            };
+            this.filteredVentas = Arrays.stream(this.ventas)
+                .filter(row -> ((Date)row[4]).before(java.sql.Date.valueOf(text)))
+                .toArray(Object[][]::new);
+            repaintPanel(this.detalles, this.filteredVentas);
+        }));
+        ventaFilterPanel.add(filterPanel, BorderLayout.CENTER);
+        mainPanel.add(ventaFilterPanel);
+        JPanel ventaPanel = createVentaSection(this.detalles, this.ventas);
         mainPanel.add(ventaPanel);
+
+        JButton newSaleButton = new JButton("Nueva venta");
+        newSaleButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        newSaleButton.setBackground(Colors.getMorningGlory("500"));
+        newSaleButton.setOpaque(true);
+        newSaleButton.setForeground(Colors.getMorningGlory("50"));
+        newSaleButton.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        newSaleButton.setFocusPainted(false);
+        newSaleButton.setContentAreaFilled(true);
+
+        newSaleButton.addActionListener(e -> {
+            JFrame newSaleFrame = new JFrame("Nueva venta");
+            newSaleFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            newSaleFrame.setSize(400, 300);
+            newSaleFrame.setLocationRelativeTo(null);
+            NewSaleView newSaleView = new NewSaleView();
+            newSaleFrame.add(newSaleView.render());
+            newSaleFrame.setVisible(true);
+        });
+
+        mainPanel.add(newSaleButton);
         return mainPanel;
     }
 
@@ -55,38 +124,50 @@ public class SalesView implements IView {
         sectionPanel.add(sectionTitle, BorderLayout.NORTH);
 
         JPanel fieldPanel = new JPanel(new GridLayout(1, 2, 10, 10));
-        fieldPanel.add(createLabeledTextField(label1,text->{ System.out.println("Texto actualizado: " + text);}));
-        fieldPanel.add(createLabeledTextField(label2,text->{ System.out.println("Texto actualizado: " + text);}));
+        fieldPanel.add(createLabeledTextField(label1,text->{filterByNameOrLastName(text,title);;}));
+        fieldPanel.add(createLabeledTextField(label2,text->{filterByNameOrLastName(text,title);}));
         sectionPanel.add(fieldPanel, BorderLayout.CENTER);
 
         return sectionPanel;
     }
-
+    private void filterByNameOrLastName(String text,String title) {
+        if(text.isEmpty()) {
+            repaintPanel(this.detalles, this.ventas);
+            return;
+        };
+        int rowNumber =  title == "Vendedor" ? 2 : 1;
+        this.filteredVentas = Arrays.stream(this.ventas)
+            .filter(row -> row[rowNumber].toString().toLowerCase().contains(text.toLowerCase()))
+            .toArray(Object[][]::new);
+        repaintPanel(this.detalles, this.filteredVentas);
+    }
     // Método para crear la sección de Venta
-    private JPanel createVentaSection() {
-        JPanel ventaTitlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-        JLabel ventaTitle = new JLabel("Venta");
-        ventaTitle.setFont(new Font("Arial", Font.BOLD, 14));
-        ventaTitlePanel.add(ventaTitle);
-        
+    private JPanel createVentaSection(Object[][] detalles, Object[][] ventas) {
         JPanel ventaPanel = new JPanel();
-        this.ventasPanel = ventaPanel;
-        ventaPanel.setName("VentaPanel");
         ventaPanel.setLayout(new BoxLayout(ventaPanel, BoxLayout.Y_AXIS));
-        ventaPanel.add(ventaTitlePanel);
-        JPanel filterPanel = new JPanel(new GridLayout(1, 3, 10, 10));
-        filterPanel.add(createLabeledTextField("Producto",text->{ System.out.println("Texto actualizado: " + text);}));
-        filterPanel.add(createLabeledTextField("fecha desde",text->{ System.out.println("Texto actualizado: " + text);}));
-        filterPanel.add(createLabeledTextField("fecha hasta",text->{ System.out.println("Texto actualizado: " + text);}));
-        ventaPanel.add(filterPanel, BorderLayout.CENTER);
-
+        this.ventasPanel = ventaPanel;
         String[] columnNamesResumen = {"Id", "Cliente", "Vendedor", "total", "fecha","estado"};
-        JTable resumenTable = new JTable(this.ventas, columnNamesResumen);
+        JTable resumenTable = new JTable(ventas, columnNamesResumen);
         resumenTable.getColumnModel().getColumn(0).setPreferredWidth(10);
         resumenTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         resumenTable.setDefaultEditor(Object.class, null); // Make table non-editable
         resumenTable.getTableHeader().setReorderingAllowed(false); // Disable column reordering
+
+        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(resumenTable.getModel()) {
+            @Override
+            protected boolean useToString(int column) {
+                return column != 0;
+            }
+            @Override
+            public Comparator<?> getComparator(int column) {
+                if (column == 0) {
+                    return Comparator.comparingInt(o -> (int) o);
+                }
+                return super.getComparator(column);
+            }
+        };
+        resumenTable.setRowSorter(sorter);
+
         resumenTable.setName("SummaryTable");
         resumenTable.addMouseListener(
             new MouseAdapter() {
@@ -96,14 +177,15 @@ public class SalesView implements IView {
                 Point point = mouseEvent.getPoint();
                 int row = table.rowAtPoint(point);
                 Object id = table.getValueAt(row, 0);
-                String sql = "Select p.nombre, cantidad , p.precio, dp.precio as precio_descuento " + 
+                String sql = "Select p.nombre, cantidad , dp.precio " + 
                             "from detalle_pedido dp " + 
                             "inner join producto p on dp.producto_id = p.id "+
                             "where pedido_id = "+id;
                 Object[][] detalles = MainGUI.db.getAll(DetallePedido.class, sql);
+                SalesView.this.detalles = detalles;
                 SalesView.this.total = MainGUI.db.getTotalPedido(Integer.parseInt(id.toString()));
                 SalesView.this.rowSelected = row;
-                repaintPanel(detalles, SalesView.this.ventas);
+                repaintPanel(detalles, isFiltered()?SalesView.this.filteredVentas: SalesView.this.ventas);
             }
         });
         resumenTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer(){
@@ -124,7 +206,7 @@ public class SalesView implements IView {
         ventaPanel.add(resumenScrollPane);
 
         String[] columnNamesDetalles = {"Producto", "Cantidad", "Precio"};
-        JTable detallesTable = new JTable(this.detalles, columnNamesDetalles);
+        JTable detallesTable = new JTable(detalles, columnNamesDetalles);
         detallesTable.setName("DetailsTable");
         detallesTable.setDefaultEditor(Object.class, null); // Make table non-editable
         detallesTable.getTableHeader().setReorderingAllowed(false); // Disable column reordering
@@ -146,6 +228,10 @@ public class SalesView implements IView {
         return ventaPanel;
     }
 
+    private boolean isFiltered(){
+        return this.filteredVentas != null && this.filteredVentas.length > 0;
+    }
+
     // Método para crear un JPanel con una etiqueta y un campo de texto
     private JPanel createLabeledTextField(String labelText, TextUpdateCallback callback) {
         JPanel panel = new JPanel();
@@ -165,11 +251,9 @@ public class SalesView implements IView {
     }
 
     private void repaintPanel(Object[][] detalles, Object[][] ventas) {
-        this.detalles = detalles;
-        this.ventas = ventas;
         JPanel ventaPanel = this.ventasPanel;
         ventaPanel.removeAll();
-        ventaPanel.add(createVentaSection());
+        ventaPanel.add(createVentaSection(detalles, ventas));
         ventaPanel.revalidate();
         ventaPanel.repaint();
     }
