@@ -41,55 +41,56 @@ Proveedor : +empresa
 Proveedor : +contacto
 
 class Producto
-Producto : +codigo: String
-Producto : +nombre: String
-Producto : +descripcion: String
-Producto : +categoria: Categoria
-Producto : +proveedor: Proveedor
-Producto : +precio: double
-Producto : +imagen: String
-Producto : +etiquetas: String[]
-Producto : +stock: int
-Producto : +componentes: Producto[]
-Producto : +modelo: Modelo
+Producto : +codigo
+Producto : +nombre
+Producto : +descripcion
+Producto : +categoria
+Producto : +proveedor
+Producto : +precio
+Producto : +imagen
+Producto : +etiquetas
+Producto : +stock
+Producto : +componentes
+Producto : +modelo
 
 class Categoria
-Categoria : +nombre: category
-Categoria : +descripcion: string
-Categoria : +tags: String[]
-Categoria : +type: enum[]
+Categoria : +nombre
+Categoria : +descripcion
+Categoria : +tags
+Categoria : +type
 
 class Modelo
-Modelo : +modelo: String
-Modelo : +descripcion: String
-Modelo : +marca: Marca
+Modelo : +modelo
+Modelo : +descripcion
+Modelo : +marca
 
 class Marca
-Marca : +cod: String
-Marca : +name: String
+Marca : +cod
+Marca : +name
 
 class Order
-Order : +date: Date
-Order : +seller: Vendedor
-Order : +client: Cliente
-Order : +status: enum[]
-Order : +details: Detalle[]
+Order : +date
+Order : +seller
+Order : +client
+Order : +status
+Order : +details
 
 class Order_details
-Order_details : +product: Producto
-Order_details : +quantity: int
-Order_details : +price: double
-Order_details : +discount: int
+Order_details : +product
+Order_details : +quantity
+Order_details : +price
+Order_details : +discount
 
 %% Relaciones
 
 Persona <|-- Vendedor
 Persona <|-- Cliente
+Persona <|-- Proveedor
 Producto --> Categoria
 Producto --> Proveedor
-Order --> Order_details
-Order_details --> Producto
 Modelo --> Marca
 Order --> Vendedor
 Order --> Cliente
+Order --> Order_details
+Order_details --> Producto
 ```
