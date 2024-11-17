@@ -4,6 +4,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.MaskFormatter;
 
 import modelo.pedido.DetallePedido;
 import modelo.pedido.Pedido;
@@ -16,6 +17,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.Date;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Comparator;
 public class SalesView implements IView {
@@ -31,6 +33,8 @@ public class SalesView implements IView {
     String lastNameVendorFilter = "";
     String nameClientFilter = "";
     String lastNameClientFilter = "";
+    String dateFromFilter = "1900-01-01";
+    String dateToFilter = "2100-01-01";
     @Override
     public JPanel render() {
         JPanel mainPanel = new JPanel();
@@ -62,24 +66,20 @@ public class SalesView implements IView {
             repaintPanel(this.filteredDetalles, this.ventas);
         }));
         filterPanel.add(createLabeledTextField("fecha desde",text->{ 
-            if(text.isEmpty() || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))) {
-                repaintPanel(this.detalles, this.ventas);
+            if(text.trim().isEmpty() || text.trim().equals("-  -") || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))){
+                this.dateFromFilter = "1900-01-01";
                 return;
-            };
-            this.filteredVentas = Arrays.stream(this.ventas)
-                .filter(row -> ((Date)row[4]).after(java.sql.Date.valueOf(text)) || ((Date)row[4]).equals(java.sql.Date.valueOf(text)))
-                .toArray(Object[][]::new);
-            repaintPanel(this.detalles, this.filteredVentas);
+            }
+            this.dateFromFilter = text.trim();
+            filter();
         }));
         filterPanel.add(createLabeledTextField("fecha hasta",text->{ 
-            if(text.isEmpty() || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))) {
-                repaintPanel(this.detalles, this.ventas);
+            if(text.trim().isEmpty() || text.trim().equals("-  -") || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))){
+                this.dateToFilter = "2100-01-01";
                 return;
-            };
-            this.filteredVentas = Arrays.stream(this.ventas)
-                .filter(row -> ((Date)row[4]).before(java.sql.Date.valueOf(text)) || ((Date)row[4]).equals(java.sql.Date.valueOf(text)))
-                .toArray(Object[][]::new);
-            repaintPanel(this.detalles, this.filteredVentas);
+            }
+            this.dateToFilter = text.trim();
+            filter();
         }));
         ventaFilterPanel.add(filterPanel, BorderLayout.CENTER);
         mainPanel.add(ventaFilterPanel);
@@ -182,10 +182,15 @@ public class SalesView implements IView {
             default:
                 break;
         }
+        filter();
+    }
+    private void filter(){
         if( nameClientFilter.isEmpty() 
            && lastNameClientFilter.isEmpty() 
            && nameVendorFilter.isEmpty() 
-           && lastNameVendorFilter.isEmpty()) {
+           && lastNameVendorFilter.isEmpty()
+           && !dateFromFilter.equals("1900-01-01")
+           && !dateToFilter.equals("2100-01-01")) {
             repaintPanel(this.detalles, this.ventas);
             return;
         };
@@ -197,12 +202,25 @@ public class SalesView implements IView {
     private boolean filterByAllFilters(Object[] row){
         int CLIENT_COLUMN = 1;
         int VENDOR_COLUMN = 2;
-        //int rowNumber =  title == "Vendedor" ? 2 : 1;
-        return row[CLIENT_COLUMN].toString().toLowerCase().contains(nameClientFilter.toLowerCase())
-            && row[CLIENT_COLUMN].toString().toLowerCase().contains(lastNameClientFilter.toLowerCase())
+        int DATE_COLUMN = 4;
 
-            && row[VENDOR_COLUMN].toString().toLowerCase().contains(nameVendorFilter.toLowerCase())
-            && row[VENDOR_COLUMN].toString().toLowerCase().contains(lastNameVendorFilter.toLowerCase());
+        Date fecha = (Date) row[DATE_COLUMN];
+        Date from = Date.valueOf(dateFromFilter);
+        Date to = Date.valueOf(dateToFilter);
+        String cliente = row[CLIENT_COLUMN].toString();
+        String vendedor = row[VENDOR_COLUMN].toString();
+
+        this.rowSelected = -1;
+        
+        return cliente.toLowerCase().contains(nameClientFilter.toLowerCase())
+            && cliente.toLowerCase().contains(lastNameClientFilter.toLowerCase())
+
+            && vendedor.toString().toLowerCase().contains(nameVendorFilter.toLowerCase())
+            && vendedor.toString().toLowerCase().contains(lastNameVendorFilter.toLowerCase())
+            
+            && (fecha.after(from) || fecha.equals(from))
+            && (fecha.before(to) || fecha.equals(to));
+        
     }
 
     private JPanel createVentaSection(Object[][] detalles, Object[][] ventas) {
@@ -269,7 +287,7 @@ public class SalesView implements IView {
         ventaPanel.add(resumenScrollPane);
 
         String[] columnNamesDetalles = {"Producto", "Cantidad", "Precio"};
-        JTable detallesTable = new JTable(detalles, columnNamesDetalles);
+        JTable detallesTable = new JTable(rowSelected== -1?new Object[][]{}:detalles, columnNamesDetalles);
         detallesTable.setName("DetailsTable");
         detallesTable.setDefaultEditor(Object.class, null); // Make table non-editable
         detallesTable.getTableHeader().setReorderingAllowed(false); // Disable column reordering
@@ -296,20 +314,30 @@ public class SalesView implements IView {
     }
 
     // Método para crear un JPanel con una etiqueta y un campo de texto
-    private JPanel createLabeledTextField(String labelText, TextUpdateCallback callback) {
+    private JPanel createLabeledTextField(String labelText, TextUpdateCallback callback){
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         JLabel label = new JLabel(labelText);
-        JTextField textField = new JTextField(10);
-        textField.getDocument().addDocumentListener(new SimpleDocumentListener() {
-            @Override
-            public void update(DocumentEvent e) {
-                String text = textField.getText();
-                callback.onTextUpdate(text);
+        try{
+            JTextField textField;
+            if(labelText.equals("Producto")){
+                textField = new JTextField(10);
+            }else{
+                MaskFormatter maskFormatter = new MaskFormatter("####-##-##");
+                textField = new JFormattedTextField(maskFormatter);
             }
-        });       
-        panel.add(label, BorderLayout.NORTH);
-        panel.add(textField, BorderLayout.CENTER);
+            textField.getDocument().addDocumentListener(new SimpleDocumentListener() {
+                @Override
+                public void update(DocumentEvent e) {
+                    String text = textField.getText();
+                    callback.onTextUpdate(text);
+                }
+            });       
+            panel.add(label, BorderLayout.NORTH);
+            panel.add(textField, BorderLayout.CENTER);
+        }catch (ParseException e){
+            e.printStackTrace();
+        }
         return panel;
     }
 
