@@ -6,9 +6,13 @@ package ui.GUI.Views;
 
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.BorderFactory;
-import javax.swing.JTable;
+import javax.swing.JFrame;
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.TableModel;
 
 import ui.GUI.MainGUI;
 import ui.GUI.Constants.Colors;
@@ -17,8 +21,6 @@ import modelo.persona.Proveedor;
 import modelo.producto.Categoria;
 import modelo.producto.Modelo;
 import modelo.producto.Producto;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 /**
  *
@@ -49,14 +51,19 @@ public class ProductsView extends javax.swing.JPanel implements IView {
         
         String [] columnNames = {"ID","CODIGO","NOMBRE","DESCRIPCION","CATEGORIA","PROVEEDOR","PRECIO","STOCK","MODELO"};
         setjTable1(productModel,columnNames);
-        jTable1.setDefaultEditor(Object.class, null);
-        jTable1.addMouseListener(
-            new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent mouseEvent) {
+        jTable1.setPreferredScrollableViewportSize(new java.awt.Dimension(600, 400));
+        jTable1.setFillsViewportHeight(true);
+        jTable1.setMaximumSize(null);
+        jTable1.setMinimumSize(null);
+        jTable1.setPreferredSize(null);
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(600, 400));
+        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        jTable1.getModel().addTableModelListener(mouseEvent -> {
+            if (mouseEvent.getType() == TableModelEvent.UPDATE) {
                 // edit row with new data
-                JTable table =(JTable) mouseEvent.getSource();
-                int row = table.rowAtPoint(mouseEvent.getPoint());
+                TableModel table =(TableModel) mouseEvent.getSource();
+                int row = mouseEvent.getFirstRow();
                 //get all fields
                 int id = Integer.parseInt(table.getValueAt(row, 0).toString());
                 String codigo = table.getValueAt(row, 1).toString();
@@ -68,9 +75,9 @@ public class ProductsView extends javax.swing.JPanel implements IView {
                 int stock = Integer.parseInt(table.getValueAt(row, 7).toString());
                 String modeloName = table.getValueAt(row, 8).toString();
                 try{
-                    int categoria_id =(int) MainGUI.db.getIdFieldValue(Categoria.class, "nombre", categoriaName);
-                    int proveedor_id = (int) MainGUI.db.getIdFieldValue(Proveedor.class, "nombre", proveedorName);
-                    int modelo_id = (int) MainGUI.db.getIdFieldValue(Modelo.class, "nombre", modeloName);
+                    int categoria_id =(int) MainGUI.db.getIdFieldValue(new Categoria(), categoriaName,"nombre");
+                    int proveedor_id = (int) MainGUI.db.getIdFieldValue(new Proveedor(), proveedorName,"nombre");
+                    int modelo_id = (int) MainGUI.db.getIdFieldValue(new Modelo(),modeloName, "nombre" );
                     
                     String updateSql = "UPDATE producto SET "+
                     "codigo = '"+codigo+"', "+
@@ -84,9 +91,8 @@ public class ProductsView extends javax.swing.JPanel implements IView {
                     "WHERE id = "+id;
                     MainGUI.db.execute(updateSql);
                     
-                    Object[][] productModel = MainGUI.db.getAll(DetallePedido.class, sql);
-                    String [] columnNames = {"ID","CODIGO","NOMBRE","DESCRIPCION","CATEGORIA","PROVEEDOR","PRECIO","STOCK","MODELO"};
-                    setjTable1(productModel, columnNames);
+                    Object[][] data = MainGUI.db.getAll(DetallePedido.class, sql);
+                    setjTable1(data, columnNames);
                 }catch(Exception e){
                     e.printStackTrace();
                 }
@@ -167,9 +173,6 @@ public class ProductsView extends javax.swing.JPanel implements IView {
             }
         });
         jTable1.getTableHeader().setReorderingAllowed(false);
-        jTable1.setMaximumSize(new java.awt.Dimension(600, 80));
-        jTable1.setMinimumSize(new java.awt.Dimension(600, 80));
-        jTable1.setPreferredSize(new java.awt.Dimension(600, 80));
         jScrollPane1.setViewportView(jTable1);
         if (jTable1.getColumnModel().getColumnCount() > 0) {
             jTable1.getColumnModel().getColumn(0).setResizable(false);
@@ -217,7 +220,22 @@ public class ProductsView extends javax.swing.JPanel implements IView {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-    
+        JFrame newSaleFrame = new JFrame("Nuevo producto");
+        newSaleFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        newSaleFrame.setSize(400, 400);
+        newSaleFrame.setLocationRelativeTo(null);
+        newSaleFrame.setResizable(false);
+        NewProductoView newProductoView = new NewProductoView();
+        newSaleFrame.add(newProductoView.render());
+        newSaleFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                String [] columnNames = {"ID","CODIGO","NOMBRE","DESCRIPCION","CATEGORIA","PROVEEDOR","PRECIO","STOCK","MODELO"};
+                Object[][] data = MainGUI.db.getAll(DetallePedido.class, sql);
+                setjTable1(data, columnNames);
+            }
+        });
+        newSaleFrame.setVisible(true);
     }//GEN-LAST:event_jButton1ActionPerformed
 
 
