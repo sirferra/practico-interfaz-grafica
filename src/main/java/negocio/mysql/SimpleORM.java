@@ -18,6 +18,7 @@ public class SimpleORM {
     public SimpleORM(Connection connection) {
         this.connection = connection;
         try{
+            System.out.println("Iniciando Database...");
             checkForDatabase();
         } catch (SQLException e) {
             e.printStackTrace();

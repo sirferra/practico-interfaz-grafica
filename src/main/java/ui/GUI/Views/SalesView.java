@@ -4,6 +4,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.MaskFormatter;
 
 import modelo.pedido.DetallePedido;
 import modelo.pedido.Pedido;
@@ -11,9 +12,12 @@ import ui.GUI.MainGUI;
 import ui.GUI.Constants.Colors;
 
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.Date;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Comparator;
 public class SalesView implements IView {
@@ -25,6 +29,12 @@ public class SalesView implements IView {
     String total = "0.00";
     String mostSoldProduct = "-";
     int rowSelected = -1;
+    String nameVendorFilter = "";
+    String lastNameVendorFilter = "";
+    String nameClientFilter = "";
+    String lastNameClientFilter = "";
+    String dateFromFilter = "1900-01-01";
+    String dateToFilter = "2100-01-01";
     @Override
     public JPanel render() {
         JPanel mainPanel = new JPanel();
@@ -32,14 +42,10 @@ public class SalesView implements IView {
         setVentas();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        JPanel vendedorPanel = createSection("Vendedor", "Nombre", "Apellido");
-        mainPanel.add(vendedorPanel);
-        mainPanel.add(Box.createVerticalStrut(10));
-        JPanel clientePanel = createSection("Cliente", "Nombre", "Apellido");
-        mainPanel.add(clientePanel);
-        mainPanel.add(Box.createVerticalStrut(10));
-        JPanel ventaTitlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
+        mainPanel.add(crearPanelFiltrosVendedorYCliente());
+                
+        JPanel ventaTitlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel ventaTitle = new JLabel("Venta");
         ventaTitle.setFont(new Font("Arial", Font.BOLD, 14));
         ventaTitlePanel.add(ventaTitle); 
@@ -47,6 +53,7 @@ public class SalesView implements IView {
         JPanel ventaFilterPanel = new JPanel();
         ventaFilterPanel.setLayout(new BoxLayout(ventaFilterPanel, BoxLayout.Y_AXIS));
         ventaFilterPanel.add(ventaTitlePanel);
+        
         JPanel filterPanel = new JPanel(new GridLayout(1, 3, 10, 10));
         filterPanel.add(createLabeledTextField("Producto", text -> {
             if(text.isEmpty()) {
@@ -59,24 +66,20 @@ public class SalesView implements IView {
             repaintPanel(this.filteredDetalles, this.ventas);
         }));
         filterPanel.add(createLabeledTextField("fecha desde",text->{ 
-            if(text.isEmpty() || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))) {
-                repaintPanel(this.detalles, this.ventas);
+            if(text.trim().isEmpty() || text.trim().equals("-  -") || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))){
+                this.dateFromFilter = "1900-01-01";
                 return;
-            };
-            this.filteredVentas = Arrays.stream(this.ventas)
-                .filter(row -> ((Date)row[4]).after(java.sql.Date.valueOf(text)))
-                .toArray(Object[][]::new);
-            repaintPanel(this.detalles, this.filteredVentas);
+            }
+            this.dateFromFilter = text.trim();
+            filter();
         }));
         filterPanel.add(createLabeledTextField("fecha hasta",text->{ 
-            if(text.isEmpty() || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))) {
-                repaintPanel(this.detalles, this.ventas);
+            if(text.trim().isEmpty() || text.trim().equals("-  -") || !text.matches(new String("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))){
+                this.dateToFilter = "2100-01-01";
                 return;
-            };
-            this.filteredVentas = Arrays.stream(this.ventas)
-                .filter(row -> ((Date)row[4]).before(java.sql.Date.valueOf(text)))
-                .toArray(Object[][]::new);
-            repaintPanel(this.detalles, this.filteredVentas);
+            }
+            this.dateToFilter = text.trim();
+            filter();
         }));
         ventaFilterPanel.add(filterPanel, BorderLayout.CENTER);
         mainPanel.add(ventaFilterPanel);
@@ -85,6 +88,7 @@ public class SalesView implements IView {
 
         JButton newSaleButton = new JButton("Nueva venta");
         newSaleButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        newSaleButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         newSaleButton.setBackground(Colors.getMorningGlory("500"));
         newSaleButton.setOpaque(true);
         newSaleButton.setForeground(Colors.getMorningGlory("50"));
@@ -102,7 +106,7 @@ public class SalesView implements IView {
             newSaleFrame.setVisible(true);
         });
 
-        mainPanel.add(newSaleButton);
+        mainPanel.add(newSaleButton, BorderLayout.CENTER);
         return mainPanel;
     }
 
@@ -114,34 +118,111 @@ public class SalesView implements IView {
         ventas = MainGUI.db.getAll(Pedido.class,sql);
     }
 
-    // Método para crear una sección básica (Vendedor, Cliente)
-    private JPanel createSection(String title, String label1, String label2) {
-        JPanel sectionPanel = new JPanel(new BorderLayout());
 
-        JLabel sectionTitle = new JLabel(title);
-        sectionTitle.setFont(new Font("Arial", Font.BOLD, 14));
-        sectionTitle.setHorizontalAlignment(SwingConstants.LEFT);
-        sectionPanel.add(sectionTitle, BorderLayout.NORTH);
+    private JPanel crearPanelFiltrosVendedorYCliente() {
+        JPanel filterPanel = new JPanel();
+        filterPanel.setLayout(new BoxLayout(filterPanel, BoxLayout.Y_AXIS));
 
-        JPanel fieldPanel = new JPanel(new GridLayout(1, 2, 10, 10));
-        fieldPanel.add(createLabeledTextField(label1,text->{filterByNameOrLastName(text,title);;}));
-        fieldPanel.add(createLabeledTextField(label2,text->{filterByNameOrLastName(text,title);}));
-        sectionPanel.add(fieldPanel, BorderLayout.CENTER);
+        JLabel filter2Title = new JLabel("Cliente");
+        filter2Title.setAlignmentX(0.5f);
+        filterPanel.add(filter2Title);
+        filterPanel.add(createFilter("Cliente", "Nombre", "Apellido"));
 
-        return sectionPanel;
+        JLabel filterTitle = new JLabel("Vendedor");
+        filterTitle.setAlignmentX(0.5f);
+        filterPanel.add(filterTitle);
+        filterPanel.add(createFilter("Vendedor", "Nombre", "Apellido"));
+
+        return filterPanel;
     }
-    private void filterByNameOrLastName(String text,String title) {
-        if(text.isEmpty()) {
+
+    private JPanel createFilter(String title, String label1, String label2) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JLabel nameLabel = new JLabel(label1);
+        JTextField nameInput = new JTextField(15);
+        nameInput.setName(title + "Name");
+        nameInput.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String text = nameInput.getText();
+                filterByNameOrLastName(text, title, title + "Name");
+            }
+        });
+        panel.add(nameLabel);
+        panel.add(nameInput);
+
+        JLabel lastNameLabel = new JLabel(label2);
+        JTextField lastNameInput = new JTextField(15);
+        lastNameInput.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String text = lastNameInput.getText();
+                filterByNameOrLastName(text, title, title + "LastName");
+            }
+        });
+        panel.add(lastNameLabel);
+        panel.add(lastNameInput);
+        return panel;
+    }
+    
+    private void filterByNameOrLastName(String text,String title, String fieldName) {
+        switch (fieldName) {
+            case "VendedorName":
+                this.nameVendorFilter = text;
+                break;
+            case "VendedorLastName":
+                this.lastNameVendorFilter = text;
+                break;
+            case "ClienteName":
+                this.nameClientFilter = text;
+                break;
+            case "ClienteLastName":
+                this.lastNameClientFilter = text;
+                break;
+            default:
+                break;
+        }
+        filter();
+    }
+    private void filter(){
+        if( nameClientFilter.isEmpty() 
+           && lastNameClientFilter.isEmpty() 
+           && nameVendorFilter.isEmpty() 
+           && lastNameVendorFilter.isEmpty()
+           && !dateFromFilter.equals("1900-01-01")
+           && !dateToFilter.equals("2100-01-01")) {
             repaintPanel(this.detalles, this.ventas);
             return;
         };
-        int rowNumber =  title == "Vendedor" ? 2 : 1;
-        this.filteredVentas = Arrays.stream(this.ventas)
-            .filter(row -> row[rowNumber].toString().toLowerCase().contains(text.toLowerCase()))
+        this.filteredVentas = Arrays.stream(ventas)
+            .filter(row -> filterByAllFilters(row))
             .toArray(Object[][]::new);
         repaintPanel(this.detalles, this.filteredVentas);
     }
-    // Método para crear la sección de Venta
+    private boolean filterByAllFilters(Object[] row){
+        int CLIENT_COLUMN = 1;
+        int VENDOR_COLUMN = 2;
+        int DATE_COLUMN = 4;
+
+        Date fecha = (Date) row[DATE_COLUMN];
+        Date from = Date.valueOf(dateFromFilter);
+        Date to = Date.valueOf(dateToFilter);
+        String cliente = row[CLIENT_COLUMN].toString();
+        String vendedor = row[VENDOR_COLUMN].toString();
+
+        this.rowSelected = -1;
+        
+        return cliente.toLowerCase().contains(nameClientFilter.toLowerCase())
+            && cliente.toLowerCase().contains(lastNameClientFilter.toLowerCase())
+
+            && vendedor.toString().toLowerCase().contains(nameVendorFilter.toLowerCase())
+            && vendedor.toString().toLowerCase().contains(lastNameVendorFilter.toLowerCase())
+            
+            && (fecha.after(from) || fecha.equals(from))
+            && (fecha.before(to) || fecha.equals(to));
+        
+    }
+
     private JPanel createVentaSection(Object[][] detalles, Object[][] ventas) {
         JPanel ventaPanel = new JPanel();
         ventaPanel.setLayout(new BoxLayout(ventaPanel, BoxLayout.Y_AXIS));
@@ -206,7 +287,7 @@ public class SalesView implements IView {
         ventaPanel.add(resumenScrollPane);
 
         String[] columnNamesDetalles = {"Producto", "Cantidad", "Precio"};
-        JTable detallesTable = new JTable(detalles, columnNamesDetalles);
+        JTable detallesTable = new JTable(rowSelected== -1?new Object[][]{}:detalles, columnNamesDetalles);
         detallesTable.setName("DetailsTable");
         detallesTable.setDefaultEditor(Object.class, null); // Make table non-editable
         detallesTable.getTableHeader().setReorderingAllowed(false); // Disable column reordering
@@ -233,20 +314,30 @@ public class SalesView implements IView {
     }
 
     // Método para crear un JPanel con una etiqueta y un campo de texto
-    private JPanel createLabeledTextField(String labelText, TextUpdateCallback callback) {
+    private JPanel createLabeledTextField(String labelText, TextUpdateCallback callback){
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         JLabel label = new JLabel(labelText);
-        JTextField textField = new JTextField(10);
-        textField.getDocument().addDocumentListener(new SimpleDocumentListener() {
-            @Override
-            public void update(DocumentEvent e) {
-                String text = textField.getText();
-                callback.onTextUpdate(text);
+        try{
+            JTextField textField;
+            if(labelText.equals("Producto")){
+                textField = new JTextField(10);
+            }else{
+                MaskFormatter maskFormatter = new MaskFormatter("####-##-##");
+                textField = new JFormattedTextField(maskFormatter);
             }
-        });       
-        panel.add(label, BorderLayout.NORTH);
-        panel.add(textField, BorderLayout.CENTER);
+            textField.getDocument().addDocumentListener(new SimpleDocumentListener() {
+                @Override
+                public void update(DocumentEvent e) {
+                    String text = textField.getText();
+                    callback.onTextUpdate(text);
+                }
+            });       
+            panel.add(label, BorderLayout.NORTH);
+            panel.add(textField, BorderLayout.CENTER);
+        }catch (ParseException e){
+            e.printStackTrace();
+        }
         return panel;
     }
 

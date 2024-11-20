@@ -7,19 +7,24 @@ import javax.swing.table.TableModel;
 import modelo.persona.*;
 import ui.GUI.MainGUI;
 import ui.GUI.Constants.Colors;
+import ui.GUI.Constants.TABLES;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class PersonsView implements IView {
-    private enum TABLES {CLIENTS,PROVIDERS,SELLER}
+   
     public TABLES renderedTable = TABLES.CLIENTS;
+    JPanel mainPanel;
     @Override
     public JPanel render() {
-        JPanel panel = configureMainPanel();
-        panel.add(renderTable(renderedTable));
-        return panel;
+        mainPanel = configureMainPanel();
+        mainPanel.add(renderTable(renderedTable));
+        mainPanel.add(addNewPersona(), BorderLayout.SOUTH);
+        return mainPanel;
     }
 
     private JPanel configureMainPanel(){
@@ -117,6 +122,36 @@ public class PersonsView implements IView {
         return scrollPane;
     }
 
+    private JButton addNewPersona(){
+        String textLabel = "Nuevo " + this.renderedTable.getName();
+        JButton newPerson = new JButton(textLabel);
+        newPerson.setFont(new Font("Arial", Font.PLAIN, 12));
+        newPerson.setAlignmentX(Component.CENTER_ALIGNMENT);
+        newPerson.setBackground(Colors.getMorningGlory("500"));
+        newPerson.setOpaque(true);
+        newPerson.setForeground(Colors.getMorningGlory("50"));
+        newPerson.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        newPerson.setFocusPainted(false);
+        newPerson.setContentAreaFilled(true);
+
+        newPerson.addActionListener(e -> {
+            JFrame newPersonFrame = new JFrame(textLabel);
+            newPersonFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            newPersonFrame.setSize(400, 400);
+            newPersonFrame.setLocationRelativeTo(null);
+            NewPersonaView newPersonView = new NewPersonaView(this.renderedTable);
+            newPersonFrame.add(newPersonView.render());
+            newPersonFrame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    repaintPanel(renderedTable, mainPanel );
+                }
+            });
+            newPersonFrame.setVisible(true);
+        });
+
+        return newPerson;
+    }
 
     private JPanel generateSuperiorButtonContainer(){
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
@@ -178,6 +213,7 @@ public class PersonsView implements IView {
         instructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(instructionLabel);
         panel.add(renderTable(renderedTable));
+        panel.add(addNewPersona(), BorderLayout.SOUTH);
         panel.revalidate();
         panel.repaint();
     }
