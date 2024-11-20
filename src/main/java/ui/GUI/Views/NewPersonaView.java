@@ -11,7 +11,16 @@ import ui.GUI.Constants.*;
 
 public class NewPersonaView implements IView{
     private TABLES parentTable;
-    private JPanel mainPanel;
+    JPanel mainPanel;
+    JTextField nombre;
+    JTextField apellido;
+    JTextField dni;
+    JTextField telefono;
+    JTextField email;
+    JTextField cuil;
+    JTextField nombreFantasia;
+    JTextField cuit;
+    JTextField sucursal;
     public NewPersonaView(TABLES table){
         parentTable = table;
     }
@@ -53,8 +62,14 @@ public class NewPersonaView implements IView{
         saveButton.addActionListener(e -> {
             try{
                 MainGUI.db.create(getDataForCreatePersona());
+                JOptionPane.showMessageDialog(null, this.parentTable.getName() + " guardado con éxito.");
+                Window parentWindow = SwingUtilities.getWindowAncestor(mainPanel);
+                if (parentWindow != null) {
+                    parentWindow.dispose();
+                }
             }catch(Exception ex){
-                ex.printStackTrace();
+                System.out.println("Error: " + ex.getLocalizedMessage());
+                //ex.printStackTrace();
             }
 
         });
@@ -67,47 +82,47 @@ public class NewPersonaView implements IView{
         JPanel inputsPanel = new JPanel();
         inputsPanel.setLayout(new BoxLayout(inputsPanel, BoxLayout.Y_AXIS));
         inputsPanel.add(new JLabel("Nombre:"));
-        JTextField nombre = new JTextField();
+        nombre = new JTextField();
         nombre.setName("nombre");
         inputsPanel.add(nombre);
         inputsPanel.add(new JLabel("Apellido:"));
-        JTextField apellido = new JTextField();
+        apellido = new JTextField();
         apellido.setName("apellido");
         inputsPanel.add(apellido);
         inputsPanel.add(new JLabel("DNI:"));
-        JTextField dni = new JTextField();
+        dni = new JTextField();
         dni.setName("dni");
         inputsPanel.add(dni);
         inputsPanel.add(new JLabel("Telefono:"));
-        JTextField telefono = new JTextField();
+        telefono = new JTextField();
         telefono.setName("telefono");
         inputsPanel.add(telefono);
         inputsPanel.add(new JLabel("Email:"));
-        JTextField email = new JTextField();
+        email = new JTextField();
         email.setName("email");
         inputsPanel.add(email);
         // Si es cliente
         if(parentTable == TABLES.CLIENTS){
             inputsPanel.add(new JLabel("CUIL:"));
-            JTextField cuil = new JTextField();
+            cuil = new JTextField();
             cuil.setName("cuil");
             inputsPanel.add(cuil);
         }
         // Si es vendedor
         if(parentTable == TABLES.PROVIDERS){
             inputsPanel.add(new JLabel("Nombre Fantasia:"));
-            JTextField nombreFantasia = new JTextField();
+            nombreFantasia = new JTextField();
             nombreFantasia.setName("nombreFantasia");
             inputsPanel.add(nombreFantasia);
             inputsPanel.add(new JLabel("CUIT:"));
-            JTextField cuit = new JTextField();
+            cuit = new JTextField();
             cuit.setName("cuit");
             inputsPanel.add(cuit);
         }
         // Si es proveedor
         if (parentTable == TABLES.SELLER) {
             inputsPanel.add(new JLabel("Sucursal:"));
-            JTextField sucursal = new JTextField();
+            sucursal = new JTextField();
             sucursal.setName("sucursal");
             inputsPanel.add(sucursal);
         }
@@ -115,25 +130,40 @@ public class NewPersonaView implements IView{
     }
     
 
-    public Object getDataForCreatePersona(){
-        String nombre = ((JTextField) this.mainPanel.getComponent(1)).getText();
-        String apellido = ((JTextField) this.mainPanel.getComponent(3)).getText();
-        String dni = ((JTextField) this.mainPanel.getComponent(5)).getText();
-        String telefono = ((JTextField) this.mainPanel.getComponent(7)).getText();
-        String email = ((JTextField) this.mainPanel.getComponent(9)).getText();
+    public Object getDataForCreatePersona() throws Error{
+        if(nombre.getText().isEmpty() || apellido.getText().isEmpty() || dni.getText().isEmpty() || telefono.getText().isEmpty() || email.getText().isEmpty()){
+            JOptionPane.showMessageDialog(null, "Es necesario que completes todos los campos");
+            throw new Error("Es necesario que completes todos los campos");
+        }
+        String nombre = this.nombre.getText();
+        String apellido = this.apellido.getText();
+        String dni = this.dni.getText();
+        String telefono = this.telefono.getText();
+        String email = this.email.getText();
         Object objeto = null;
         if(parentTable == TABLES.CLIENTS){
-            String cuil = ((JTextField) this.mainPanel.getComponent(11)).getText();
+            if(cuil.getText().isEmpty()){
+                JOptionPane.showMessageDialog(null, "Es necesario que completes todos los campos");
+                throw new Error("Es necesario que completes todos los campos");
+            }
+            String cuil = this.cuil.getText();
             objeto = new Cliente(cuil,nombre, apellido,Integer.parseInt(dni), telefono, email);
         }
         if(parentTable == TABLES.SELLER){
-            String sucursal = ((JTextField) this.mainPanel.getComponent(11)).getText();
-            objeto = new Vendedor(sucursal,nombre, apellido,Integer.parseInt(dni), telefono, email);
-            
+            if(sucursal.getText().isEmpty()){
+                JOptionPane.showMessageDialog(null, "Es necesario que completes todos los campos");
+                throw new Error("Es necesario que completes todos los campos");
+            }
+            String sucursal = this.sucursal.getText();
+            objeto = new Vendedor(sucursal,nombre, apellido,Integer.parseInt(dni), telefono, email);   
         }
         if(parentTable == TABLES.PROVIDERS){
-            String cuit = ((JTextField) this.mainPanel.getComponent(11)).getText();
-            String nombreFantasia = ((JTextField) this.mainPanel.getComponent(13)).getText();
+            if(cuit.getText().isEmpty() || nombreFantasia.getText().isEmpty()){
+                JOptionPane.showMessageDialog(null, "Es necesario que completes todos los campos");
+                throw new Error("Es necesario que completes todos los campos");
+            }
+            String cuit = this.cuit.getText();
+            String nombreFantasia = this.nombreFantasia.getText();
             objeto = new Proveedor(nombreFantasia, cuit,nombre, apellido,Integer.parseInt(dni), telefono, email);
         }
         return objeto;

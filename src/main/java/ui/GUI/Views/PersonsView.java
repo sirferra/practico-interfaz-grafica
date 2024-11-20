@@ -12,16 +12,19 @@ import ui.GUI.Constants.TABLES;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class PersonsView implements IView {
    
     public TABLES renderedTable = TABLES.CLIENTS;
+    JPanel mainPanel;
     @Override
     public JPanel render() {
-        JPanel panel = configureMainPanel();
-        panel.add(renderTable(renderedTable));
-        panel.add(addNewPersona(), BorderLayout.SOUTH);
-        return panel;
+        mainPanel = configureMainPanel();
+        mainPanel.add(renderTable(renderedTable));
+        mainPanel.add(addNewPersona(), BorderLayout.SOUTH);
+        return mainPanel;
     }
 
     private JPanel configureMainPanel(){
@@ -134,10 +137,16 @@ public class PersonsView implements IView {
         newPerson.addActionListener(e -> {
             JFrame newPersonFrame = new JFrame(textLabel);
             newPersonFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            newPersonFrame.setSize(400, 300);
+            newPersonFrame.setSize(400, 400);
             newPersonFrame.setLocationRelativeTo(null);
             NewPersonaView newPersonView = new NewPersonaView(this.renderedTable);
             newPersonFrame.add(newPersonView.render());
+            newPersonFrame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    repaintPanel(renderedTable, mainPanel );
+                }
+            });
             newPersonFrame.setVisible(true);
         });
 
