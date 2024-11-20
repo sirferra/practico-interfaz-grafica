@@ -316,7 +316,6 @@ public class SimpleORM {
         } 
     }
 
-
     public Object[][] getAll(Class<?> class1, String _sql) {
         try {
             String sql= "";
@@ -351,6 +350,7 @@ public class SimpleORM {
             return null;
         }
     }
+
 
     public List<?> getAll(Class<?> clazz) {
         try {
@@ -450,6 +450,15 @@ public class SimpleORM {
             detalleStmt.executeBatch();
         }
     
+    }
+
+    public void execute(String updateSql) {
+        try {
+            Statement stmt = connection.createStatement();
+            stmt.execute(updateSql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     

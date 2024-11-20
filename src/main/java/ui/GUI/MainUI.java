@@ -6,6 +6,7 @@ import ui.GUI.Constants.Colors;
 import ui.GUI.Views.HomeView;
 import ui.GUI.Views.IView;
 import ui.GUI.Views.PersonsView;
+import ui.GUI.Views.ProductsView;
 import ui.GUI.Views.SalesView;
 
 import java.awt.*;
@@ -45,6 +46,7 @@ public class MainUI extends JFrame {
 
         configureButton(new JButton("Home"), buttonPanel, "/ui/GUI/resources/home.png", new HomeView());
         configureButton(new JButton("Personas"), buttonPanel, "/ui/GUI/resources/people.png", new PersonsView());
+        configureButton(new JButton("Productos"), buttonPanel,"/ui/GUI/resources/productos.png", new ProductsView());
         configureButton(new JButton("Sales"), buttonPanel,"/ui/GUI/resources/sales.png", new SalesView());
 
         return buttonPanel;

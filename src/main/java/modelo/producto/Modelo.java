@@ -54,4 +54,9 @@ public class Modelo {
     public void setMarcaId(int marcaId) {
         this.marcaId = marcaId;
     }
+
+    @Override
+    public String toString() {
+        return this.getNombre();
+    }
 }

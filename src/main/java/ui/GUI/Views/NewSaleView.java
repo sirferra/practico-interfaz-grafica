@@ -25,7 +25,7 @@ public class NewSaleView implements IView {
     private List<?> vendedores;
     private Map<String, Cliente> clienteMap;
     private Map<String, Vendedor> vendedorMap;
-
+    private JPanel mainPanel;
     public NewSaleView() {
         this.clientes = MainGUI.db.getAll(Cliente.class);
         this.vendedores = MainGUI.db.getAll(Vendedor.class);
@@ -65,7 +65,7 @@ public class NewSaleView implements IView {
 
     @Override
     public JPanel render() {
-        JPanel mainPanel = new JPanel();
+        mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
         // Sección de Cliente y Vendedor
@@ -133,6 +133,10 @@ public class NewSaleView implements IView {
         try {
             MainGUI.db.saveSale(clienteId, vendedorId, fecha, getProductosFromTable());
             JOptionPane.showMessageDialog(null, "Venta guardada con éxito.");
+            Window parentWindow = SwingUtilities.getWindowAncestor(mainPanel);
+            if (parentWindow != null) {
+                parentWindow.dispose();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error al guardar la venta: " + e.getMessage());

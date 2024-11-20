@@ -92,6 +92,9 @@ public class Producto {
     public Categoria getCategoria() {
         return categoria;
     }
+    public String getCategoriaName() {
+        return categoria.getNombre();
+    }
 
     public void setCategoria(Categoria categoria) {
         this.categoria = categoria;
@@ -99,6 +102,9 @@ public class Producto {
 
     public Proveedor getProveedor() {
         return proveedor;
+    }
+    public String getProveedorName() {
+        return proveedor.getNombreFantasia();
     }
 
     public void setProveedor(Proveedor proveedor) {
@@ -139,6 +145,9 @@ public class Producto {
 
     public Modelo getModelo() {
         return modelo;
+    }
+    public String getModeloName() {
+        return modelo.getNombre();
     }
 
     public void setModelo(Modelo modelo) {

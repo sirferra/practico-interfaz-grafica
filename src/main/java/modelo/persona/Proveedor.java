@@ -60,7 +60,8 @@ public class Proveedor extends Persona {
    
     @Override
     public String toString(){
-        return super.toString() + ";"+this.cuit+";"+this.nombreFantasia;
+        //return super.toString() + ";"+this.cuit+";"+this.nombreFantasia;
+        return this.getNombre() + " " + this.getApellido();
     }
 
     public static String getHeaders() {
