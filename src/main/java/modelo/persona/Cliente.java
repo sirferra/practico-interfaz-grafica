@@ -44,9 +44,14 @@ public class Cliente extends Persona{
     }
 
     
+    // @Override
+    // public String toString(){
+    //     return super.toString() + ";"+this.cuil;
+    // }
+
     @Override
-    public String toString(){
-        return super.toString() + ";"+this.cuil;
+    public String toString() {
+        return this.getNombre() + " " + this.getApellido();
     }
 
     public static String getHeaders() {

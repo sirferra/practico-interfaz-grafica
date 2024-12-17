@@ -1,0 +1,11 @@
+{
+    "name": "practico-interfaz-grafica",
+    "version": "1.0.0",
+    "description": "Final para interfaz grafica",
+    "scripts": {
+        "start": "& 'C:\\Program Files\\Eclipse Adoptium\\jre-21.0.4.7-hotspot\\bin\\java.exe' '-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=localhost:7829' '@C:\\Users\\sirle\\AppData\\Local\\Temp\\cp_48amo5bt12ry1tt9hxc9rnhme.argfile' 'principal.VentaBici'"
+    },
+    "dependencies": {
+        "practico-interfaz-grafica": "file:"
+    }
+}
