@@ -113,7 +113,7 @@ public class FilterByMonthView extends javax.swing.JPanel  implements IView{
         setValueOfMinMaxTotal("", "", "", "");
         minMonthValue.setText(String.valueOf(this.monthmin));
         maxMonthValue.setText(String.valueOf(this.monthmax));
-        total.setText(String.valueOf(this.monthtotal));
+        total1.setText(String.valueOf(this.monthtotal));
         return this;
     }
 
@@ -129,7 +129,7 @@ public class FilterByMonthView extends javax.swing.JPanel  implements IView{
         this.setValueOfMinMaxTotal(vendedor_id, cliente_id, montoDesde, montoHasta);
         minMonthValue.setText(String.valueOf(this.monthmin));
         maxMonthValue.setText(String.valueOf(this.monthmax));
-        total.setText(String.valueOf(this.monthtotal));
+        total1.setText(String.valueOf(this.monthtotal));
 
     }
 
