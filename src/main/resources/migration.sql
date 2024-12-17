@@ -54,7 +54,7 @@ INSERT INTO cliente (id, nombre, apellido, dni, telefono, email, cuil) VALUES
     (7, 'Lucas', 'Sanchez', 23456789, '2345-6789', 'lsanchez@cliente.com', '20-23456789-7'),
     (8, 'Valentina', 'Torres', 34567890, '3456-7890', 'vtorres@cliente.com', '20-34567890-8'),
     (9, 'Emilia', 'Diaz', 45678901, '4567-8901', 'ediaz@cliente.com', '20-45678901-9'),
-    (10, 'Martin', 'Moreno', 56789012, '5678-9012', 'mmoreno@cliente.com', '20-56789012-0'),
+    (10, 'Martin', 'Moreno', 56789012, '5678-9012', 'mmoreno@cliente.com', '20-56789012-0');
 INSERT INTO pedido (id, cliente_id, vendedor_id, fecha, total, estado) VALUES
     (1, 1, 1, '2022-01-01', 8000.0, 'PREPARACION'),
     (2, 2, 2, '2022-01-02', 3000.0, 'CANCELADO'),
@@ -130,7 +130,7 @@ INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio) VALUES
     (23, 4, 1, 9000.0),
     (24, 5, 3, 23000.0),
     (25, 1, 1, 7000.0),
-     (26, 1, 2, 5000.0),
+    (26, 1, 2, 5000.0),
     (26, 3, 1, 4500.0),
     (27, 2, 1, 7500.0),
     (27, 5, 1, 4000.0),
