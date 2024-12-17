@@ -3,6 +3,7 @@ package ui.GUI;
 import javax.swing.*;
 
 import ui.GUI.Constants.Colors;
+import ui.GUI.Views.FilterByMonthView;
 import ui.GUI.Views.HomeView;
 import ui.GUI.Views.IView;
 import ui.GUI.Views.PersonsView;
@@ -21,7 +22,11 @@ public class MainUI extends JFrame {
     public MainUI(IView view) {
         currentView = view;
         setTitle("Ventas de bicicletas");
-        setSize(600, 700);
+        if(currentView.getClass() == FilterByMonthView.class) {
+            setSize(712,515);
+        }else{
+            setSize(600, 700);
+        }
         // Centrar la ventana en la pantalla
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         this.setLocation(dim.width/2-this.getSize().width/2, dim.height/2-this.getSize().height/2);
@@ -48,13 +53,18 @@ public class MainUI extends JFrame {
         configureButton(new JButton("Personas"), buttonPanel, "/ui/GUI/resources/people.png", new PersonsView());
         configureButton(new JButton("Productos"), buttonPanel,"/ui/GUI/resources/productos.png", new ProductsView());
         configureButton(new JButton("Sales"), buttonPanel,"/ui/GUI/resources/sales.png", new SalesView());
-
+        configureButton(new JButton("Mensuales"), buttonPanel, "/ui/GUI/resources/monthly.png", new FilterByMonthView());
         return buttonPanel;
     }
 
    
     private void configureButton(JButton button, JPanel buttonPanel, String iconPath, IView view) {
-        button.setIcon(new ImageIcon(getClass().getResource(iconPath))); 
+        ImageIcon imageIcon = new ImageIcon(getClass().getResource(iconPath)); //unscaled image
+        Image image = imageIcon.getImage();
+        Image newimg = image.getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH); // resize it here
+        //imageIcon = new ImageIcon(newimg);
+
+        button.setIcon(new ImageIcon(newimg)); 
         button.setMargin(new Insets(0, 0, 0, 0));
         button.setIconTextGap(10);
         if(currentView.getClass() == view.getClass()){

@@ -452,14 +452,33 @@ public class SimpleORM {
     
     }
 
-    public void execute(String updateSql) {
+    public void execute(String sql) {
         try {
             Statement stmt = connection.createStatement();
-            stmt.execute(updateSql);
+            stmt.execute(sql);
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    public ArrayList<HashMap<String, Object>> executeQuery(String sql) {
+        ArrayList<HashMap<String, Object>> result = new ArrayList<>();
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
     
+            while (rs.next()) {
+                HashMap<String, Object> row = new HashMap<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    row.put(metaData.getColumnName(i), rs.getObject(i));
+                }
+                result.add(row);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 }

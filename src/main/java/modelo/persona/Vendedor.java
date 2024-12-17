@@ -35,9 +35,13 @@ public class Vendedor extends Persona {
         this.sucursal = sucursal;
     }
 
+    // @Override
+    // public String toString() {
+    //     return super.toString() + ";"+this.sucursal;
+    // }
     @Override
     public String toString() {
-        return super.toString() + ";"+this.sucursal;
+        return this.getNombre() + " " + this.getApellido();
     }
 
     public static String getHeaders() {
